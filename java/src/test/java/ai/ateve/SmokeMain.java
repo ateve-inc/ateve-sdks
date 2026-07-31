@@ -32,7 +32,7 @@ public final class SmokeMain {
             check("snake_case response", response.latencyMs() == 412);
             check("authorization header",
                     "Bearer sk_test_123".equals(api.receivedAuthHeaders.get(0)));
-            check("user agent", "ateve-java/0.1.0".equals(api.receivedUserAgents.get(0)));
+            check("user agent", "ateve-java/0.0.1".equals(api.receivedUserAgents.get(0)));
         }
     }
 
