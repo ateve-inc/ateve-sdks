@@ -1,0 +1,56 @@
+{
+  "name": "ateve",
+  "version": "0.1.0",
+  "description": "Official JavaScript and TypeScript SDK for the Ateve Search API",
+  "license": "Apache-2.0",
+  "author": "Ateve Inc.",
+  "keywords": [
+    "ateve",
+    "search",
+    "RAG",
+    "AI"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ateve-inc/ateve-sdks.git"
+  },
+  "homepage": "https://ateve.ai",
+  "bugs": {
+    "url": "https://github.com/ateve-inc/ateve-sdks/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  }
+}
