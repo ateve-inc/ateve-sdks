@@ -13,7 +13,6 @@ import ai.ateve.models.ContentOptions;
 import ai.ateve.models.LocaleSettings;
 import ai.ateve.models.SearchRequest;
 import ai.ateve.models.SearchResponse;
-import ai.ateve.models.Topic;
 import ai.ateve.models.UserLocation;
 import org.junit.jupiter.api.Test;
 
@@ -98,19 +97,20 @@ class AteveClientTest {
                     .query("climate policy analysis")
                     .limit(20)
                     .dateRange("2026-01-01..2026-06-30")
-                    .topic(Topic.NEWS)
                     .locale(LocaleSettings.builder().mkt("US").language("en").build())
                     .includeDomains(List.of("reuters.com"))
                     .content(ContentOptions.builder()
-                            .summary(true).format(ContentFormat.MARKDOWN).images(3).build())
+                            .summary(true).format(ContentFormat.MARKDOWN).maxCharacters(5000).build())
                     .safeSearch(true)
                     .build());
 
             String body = api.receivedBodies.get(0);
+            assertTrue(body.contains("\"max_characters\":5000"), body);
+            assertFalse(body.contains("\"topic\""), body);
+            assertFalse(body.contains("\"images\""), body);
             assertTrue(body.contains("\"date_range\":\"2026-01-01..2026-06-30\""), body);
             assertTrue(body.contains("\"include_domains\":[\"reuters.com\"]"), body);
             assertTrue(body.contains("\"safe_search\":true"), body);
-            assertTrue(body.contains("\"topic\":\"news\""), body);
             assertFalse(body.contains("dateRange"), "camelCase leaked to wire: " + body);
             assertFalse(body.contains("\"offset\""), "null fields must be omitted: " + body);
             assertEquals("Bearer sk_test_123", api.receivedAuthHeaders.get(0));
@@ -618,7 +618,10 @@ class AteveClientTest {
                 () -> SearchRequest.builder().query("x")
                         .dateRange("2026-07-31..2026-01-01").build());
         assertThrows(IllegalArgumentException.class,
-                () -> ContentOptions.builder().images(11).build());
+                () -> ContentOptions.builder().maxCharacters(0).build());
+        assertThrows(IllegalArgumentException.class,
+                () -> SearchRequest.builder().query("q").offset(100).build());
+        assertEquals(99, SearchRequest.builder().query("q").offset(99).build().offset());
         assertThrows(IllegalArgumentException.class,
                 () -> LocaleSettings.builder().mkt("us").build());
         assertThrows(IllegalArgumentException.class,

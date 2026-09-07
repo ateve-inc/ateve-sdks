@@ -157,8 +157,8 @@ function validateRequest(request: SearchRequest): void {
     throw new Error("query must not exceed 2000 characters");
   }
   requireIntegerRange(request.limit, 1, 50, "limit");
-  requireIntegerRange(request.offset, 0, 1_000, "offset");
-  requireIntegerRange(request.content?.images, 0, 10, "content.images");
+  requireIntegerRange(request.offset, 0, 99, "offset");
+  requireIntegerRange(request.content?.maxCharacters, 1, 2_147_483_647, "content.maxCharacters");
   if ((request.includeDomains?.length ?? 0) > 300) {
     throw new Error("includeDomains must not exceed 300 entries");
   }
@@ -203,7 +203,6 @@ function toWire(request: SearchRequest): Record<string, unknown> {
   assign(wire, "limit", request.limit);
   assign(wire, "offset", request.offset);
   assign(wire, "date_range", request.dateRange);
-  assign(wire, "topic", request.topic);
   assign(wire, "include_domains", request.includeDomains);
   assign(wire, "exclude_domains", request.excludeDomains);
   assign(wire, "safe_search", request.safeSearch);
@@ -228,7 +227,7 @@ function toWire(request: SearchRequest): Record<string, unknown> {
     assign(content, "format", request.content.format);
     assign(content, "summary", request.content.summary);
     assign(content, "highlights", request.content.highlights);
-    assign(content, "images", request.content.images);
+    assign(content, "max_characters", request.content.maxCharacters);
     assign(content, "favicon", request.content.favicon);
     wire.content = content;
   }

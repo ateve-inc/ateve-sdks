@@ -19,7 +19,6 @@ from ateve import (
     RateLimitError,
     SearchRequest,
     ServerError,
-    Topic,
     UserLocation,
 )
 
@@ -89,15 +88,17 @@ def test_sync_golden_contract_and_wire_names() -> None:
         "climate policy analysis",
         limit=20,
         date_range="2026-01-01..2026-06-30",
-        topic=Topic.NEWS,
         locale=LocaleSettings(mkt="US", language="en"),
-        content=ContentOptions(format=ContentFormat.MARKDOWN, summary=True, images=3),
+        content=ContentOptions(format=ContentFormat.MARKDOWN, summary=True, max_characters=5000),
         safe_search=False,
     )
 
     payload = json.loads(captured[0].content)
     assert payload["date_range"] == "2026-01-01..2026-06-30"
     assert payload["safe_search"] is False
+    assert payload["content"]["max_characters"] == 5000
+    assert "images" not in payload["content"]
+    assert "topic" not in payload
     assert payload["content"]["format"] == "markdown"
     assert "dateRange" not in payload
     assert captured[0].headers["Authorization"] == "Bearer sk_test"
@@ -294,7 +295,7 @@ def test_request_validation_and_endpoint_hardening() -> None:
     with pytest.raises(ValidationError):
         SearchRequest(query="q", date_range="2026-02-31")
     with pytest.raises(ValidationError):
-        ContentOptions(images=11)
+        ContentOptions(max_characters=0)
     with pytest.raises(ValidationError):
         LocaleSettings(mkt="us")
     with pytest.raises(ValidationError):
@@ -333,3 +334,14 @@ def test_async_client_contract_bulkhead_and_borrowed_lifecycle() -> None:
         await external.aclose()
 
     asyncio.run(scenario())
+
+
+def test_contract028_depth_and_removed_parameters() -> None:
+    assert SearchRequest(query="q", offset=99).offset == 99
+    assert ContentOptions(max_characters=9000).max_characters == 9000
+    with pytest.raises(ValidationError):
+        SearchRequest(query="q", offset=100)
+    with pytest.raises(ValidationError):
+        SearchRequest.model_validate({"query": "q", "topic": "news"})
+    with pytest.raises(ValidationError):
+        ContentOptions.model_validate({"images": 3})

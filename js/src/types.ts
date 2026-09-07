@@ -1,18 +1,3 @@
-export type Topic =
-  | "general"
-  | "news"
-  | "paper"
-  | "docs"
-  | "code"
-  | "forum"
-  | "wiki"
-  | "people"
-  | "company"
-  | "personal_site"
-  | "financial_report"
-  | "government"
-  | "ecommerce";
-
 export type ContentFormat = "text" | "markdown";
 
 export interface UserLocation {
@@ -34,7 +19,8 @@ export interface ContentOptions {
   format?: ContentFormat;
   summary?: boolean;
   highlights?: boolean;
-  images?: number;
+  /** Per-result raw content character limit; server default 5000. */
+  maxCharacters?: number;
   favicon?: boolean;
 }
 
@@ -44,7 +30,6 @@ export interface SearchRequest {
   offset?: number;
   dateRange?: string;
   locale?: LocaleSettings;
-  topic?: Topic;
   includeDomains?: string[];
   excludeDomains?: string[];
   content?: ContentOptions;

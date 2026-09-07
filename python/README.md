@@ -11,13 +11,12 @@ pip install ateve
 ## Synchronous
 
 ```python
-from ateve import Ateve, ContentOptions, Topic
+from ateve import Ateve, ContentOptions
 
 with Ateve() as client:  # reads ATEVE_API_KEY
     response = client.search(
         query="quantum computing",
         date_range="week",
-        topic=Topic.NEWS,
         content=ContentOptions(summary=True, highlights=True),
     )
     print(response.results[0].title, response.usage.credits)
@@ -52,3 +51,7 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 `ApiConnectionError`, `ApiResponseError`, and `ConcurrencyLimitError`.
 `RateLimitError` preserves `retry_after_seconds` and `limit_scope`; retry
 decisions remain caller-owned.
+
+## Search contract limits
+
+Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `ContentOptions(raw_content=True, max_characters=8000)`. The limit is a positive signed 32-bit integer with no fixed business cap.

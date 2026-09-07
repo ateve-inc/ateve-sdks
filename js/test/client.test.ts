@@ -83,9 +83,8 @@ describe("Ateve JavaScript SDK", () => {
       query: "climate policy analysis",
       limit: 20,
       dateRange: "2026-01-01..2026-06-30",
-      topic: "news",
       locale: { mkt: "US", language: "en" },
-      content: { summary: true, format: "markdown", images: 3 },
+      content: { summary: true, format: "markdown", maxCharacters: 5000 },
       safeSearch: false,
     });
 
@@ -93,6 +92,9 @@ describe("Ateve JavaScript SDK", () => {
     expect(capturedUrl).toBe("https://api.test/v1/search");
     expect(wire.date_range).toBe("2026-01-01..2026-06-30");
     expect(wire.safe_search).toBe(false);
+    expect(wire.content).toHaveProperty("max_characters", 5000);
+    expect(wire.content).not.toHaveProperty("images");
+    expect(wire).not.toHaveProperty("topic");
     expect(wire).not.toHaveProperty("dateRange");
     expect(new Headers(capturedInit?.headers).get("Authorization")).toBe(
       "Bearer sk_test",
@@ -321,6 +323,9 @@ describe("Ateve JavaScript SDK", () => {
           fetch,
         }),
     ).toThrow("user-info");
+    await expect(client.search({ query: "q", offset: 100 })).rejects.toThrow("offset");
+    await expect(client.search({ query: "q", content: { maxCharacters: 0 } })).rejects.toThrow("maxCharacters");
+    await expect(client.search({ query: "q", offset: 99, content: { maxCharacters: 8000 } })).resolves.toBeDefined();
     await expect(client.search({ query: " ", limit: 0 })).rejects.toThrow("query");
     await expect(
       client.search({ query: "q", dateRange: "2026-02-31" }),

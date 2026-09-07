@@ -11,7 +11,7 @@ public final class ContentOptions {
     private final ContentFormat format;
     private final Boolean summary;
     private final Boolean highlights;
-    private final Integer images;   // 0..10, server default 3; 0 = no images
+    private final Integer maxCharacters;   // positive Unicode character limit per raw_content; server default 5000
     private final Boolean favicon;
 
     private ContentOptions(Builder b) {
@@ -20,7 +20,7 @@ public final class ContentOptions {
         this.format = b.format;
         this.summary = b.summary;
         this.highlights = b.highlights;
-        this.images = b.images;
+        this.maxCharacters = b.maxCharacters;
         this.favicon = b.favicon;
     }
 
@@ -33,7 +33,7 @@ public final class ContentOptions {
     public ContentFormat format() { return format; }
     public Boolean summary() { return summary; }
     public Boolean highlights() { return highlights; }
-    public Integer images() { return images; }
+    public Integer maxCharacters() { return maxCharacters; }
     public Boolean favicon() { return favicon; }
 
     public static final class Builder {
@@ -42,7 +42,7 @@ public final class ContentOptions {
         private ContentFormat format;
         private Boolean summary;
         private Boolean highlights;
-        private Integer images;
+        private Integer maxCharacters;
         private Boolean favicon;
 
         public Builder snippet(Boolean snippet) { this.snippet = snippet; return this; }
@@ -50,12 +50,12 @@ public final class ContentOptions {
         public Builder format(ContentFormat format) { this.format = format; return this; }
         public Builder summary(Boolean summary) { this.summary = summary; return this; }
         public Builder highlights(Boolean highlights) { this.highlights = highlights; return this; }
-        public Builder images(Integer images) { this.images = images; return this; }
+        public Builder maxCharacters(Integer maxCharacters) { this.maxCharacters = maxCharacters; return this; }
         public Builder favicon(Boolean favicon) { this.favicon = favicon; return this; }
 
         public ContentOptions build() {
-            if (images != null && (images < 0 || images > 10)) {
-                throw new IllegalArgumentException("images must be between 0 and 10");
+            if (maxCharacters != null && maxCharacters < 1) {
+                throw new IllegalArgumentException("maxCharacters must be positive");
             }
             return new ContentOptions(this);
         }

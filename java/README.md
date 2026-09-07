@@ -4,7 +4,7 @@ Official Java client for the Ateve Search API (`POST /v1/search`).
 
 - Coordinates: `ai.ateve:ateve-java` · Package: `ai.ateve` · JDK 11+
 - Runtime dependency: jackson-databind only
-- Contract source of truth: the Ateve Search API documentation at https://ateve.ai/docs
+- Contract source of truth: [`docs/sdk/openapi.yaml`](../../docs/sdk/openapi.yaml)
 
 The public Java namespace is exclusively `ai.ateve.*`, derived from Ateve's
 owned `ateve.ai` domain.
@@ -30,7 +30,6 @@ AteveClient client = AteveClient.builder().build(); // reads ATEVE_API_KEY
 SearchResponse response = client.search(SearchRequest.builder()
         .query("quantum computing")
         .dateRange("week")
-        .topic(Topic.NEWS)
         .build());
 
 System.out.println(response.id());
@@ -162,3 +161,7 @@ failure are classified as possibly sent.
 mvn test              # local JDK HttpServer tests; no external network
 mvn -Prelease verify  # also builds sources.jar and javadoc.jar
 ```
+
+## Search contract limits
+
+Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `ContentOptions.builder().rawContent(true).maxCharacters(8000).build()`. The limit is a positive signed 32-bit integer with no fixed business cap.

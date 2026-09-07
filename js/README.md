@@ -18,7 +18,6 @@ const client = new Ateve(); // reads ATEVE_API_KEY
 const response = await client.search({
   query: "quantum computing",
   dateRange: "week",
-  topic: "news",
   content: { summary: true, highlights: true },
 });
 
@@ -44,3 +43,7 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 `RateLimitError`, `InvalidRequestError`, `ServerError`,
 `ApiConnectionError`, `ApiResponseError`, and `ConcurrencyLimitError`.
 `RateLimitError` preserves `retryAfterSeconds` and `limitScope`.
+
+## Search contract limits
+
+Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `content: { rawContent: true, maxCharacters: 8000 }`. The limit is a positive signed 32-bit integer with no fixed business cap.

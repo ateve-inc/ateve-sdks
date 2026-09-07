@@ -11,22 +11,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class Topic(str, Enum):
-    GENERAL = "general"
-    NEWS = "news"
-    PAPER = "paper"
-    DOCS = "docs"
-    CODE = "code"
-    FORUM = "forum"
-    WIKI = "wiki"
-    PEOPLE = "people"
-    COMPANY = "company"
-    PERSONAL_SITE = "personal_site"
-    FINANCIAL_REPORT = "financial_report"
-    GOVERNMENT = "government"
-    ECOMMERCE = "ecommerce"
-
-
 class ContentFormat(str, Enum):
     TEXT = "text"
     MARKDOWN = "markdown"
@@ -72,7 +56,7 @@ class ContentOptions(RequestModel):
     format: Optional[ContentFormat] = None
     summary: Optional[bool] = None
     highlights: Optional[bool] = None
-    images: Optional[int] = Field(default=None, ge=0, le=10)
+    max_characters: Optional[int] = Field(default=None, ge=1, le=2147483647, strict=True)
     favicon: Optional[bool] = None
 
 
@@ -109,10 +93,9 @@ def _validate_date_range(value: Optional[str]) -> Optional[str]:
 class SearchRequest(RequestModel):
     query: str = Field(min_length=1, max_length=2000)
     limit: Optional[int] = Field(default=None, ge=1, le=50)
-    offset: Optional[int] = Field(default=None, ge=0, le=1000)
+    offset: Optional[int] = Field(default=None, ge=0, le=99)
     date_range: Optional[str] = None
     locale: Optional[LocaleSettings] = None
-    topic: Optional[Topic] = None
     include_domains: Optional[List[str]] = Field(default=None, max_length=300)
     exclude_domains: Optional[List[str]] = Field(default=None, max_length=300)
     content: Optional[ContentOptions] = None

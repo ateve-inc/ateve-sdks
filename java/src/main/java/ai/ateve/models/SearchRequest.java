@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * (handled globally by the SDK's ObjectMapper).
  *
  * <p>Only {@code query} is required. Server-side limits: query ≤ 2000 chars,
- * limit 1..50 (default 10), offset 0..1000, include/exclude_domains ≤ 300 entries.
+ * limit 1..50 (default 10), offset 0..99, include/exclude_domains ≤ 300 entries.
  *
  * <p>Instances are immutable and safe to share across threads; {@code build()}
  * snapshots the builder, so reusing or mutating a {@link Builder} afterwards
@@ -37,7 +37,6 @@ public final class SearchRequest {
      */
     private final String dateRange;
     private final LocaleSettings locale;
-    private final Topic topic;
     private final List<String> includeDomains;
     private final List<String> excludeDomains;
     private final ContentOptions content;
@@ -49,7 +48,6 @@ public final class SearchRequest {
         this.offset = b.offset;
         this.dateRange = b.dateRange;
         this.locale = b.locale;
-        this.topic = b.topic;
         this.includeDomains = b.includeDomains == null ? null : List.copyOf(b.includeDomains);
         this.excludeDomains = b.excludeDomains == null ? null : List.copyOf(b.excludeDomains);
         this.content = b.content;
@@ -65,7 +63,6 @@ public final class SearchRequest {
     public Integer offset() { return offset; }
     public String dateRange() { return dateRange; }
     public LocaleSettings locale() { return locale; }
-    public Topic topic() { return topic; }
     /** Immutable; null when unset. */
     public List<String> includeDomains() { return includeDomains; }
     /** Immutable; null when unset. */
@@ -79,7 +76,6 @@ public final class SearchRequest {
         private Integer offset;
         private String dateRange;
         private LocaleSettings locale;
-        private Topic topic;
         private List<String> includeDomains;
         private List<String> excludeDomains;
         private ContentOptions content;
@@ -90,7 +86,6 @@ public final class SearchRequest {
         public Builder offset(Integer offset) { this.offset = offset; return this; }
         public Builder dateRange(String dateRange) { this.dateRange = dateRange; return this; }
         public Builder locale(LocaleSettings locale) { this.locale = locale; return this; }
-        public Builder topic(Topic topic) { this.topic = topic; return this; }
         public Builder includeDomains(List<String> domains) { this.includeDomains = domains; return this; }
         public Builder excludeDomains(List<String> domains) { this.excludeDomains = domains; return this; }
         public Builder content(ContentOptions content) { this.content = content; return this; }
@@ -104,7 +99,7 @@ public final class SearchRequest {
                 throw new IllegalArgumentException("query must not exceed 2000 characters");
             }
             requireRange(limit, 1, 50, "limit");
-            requireRange(offset, 0, 1000, "offset");
+            requireRange(offset, 0, 99, "offset");
             requireMaxSize(includeDomains, 300, "includeDomains");
             requireMaxSize(excludeDomains, 300, "excludeDomains");
             validateDateRange(dateRange);
