@@ -114,7 +114,7 @@ class AteveClientTest {
             assertFalse(body.contains("dateRange"), "camelCase leaked to wire: " + body);
             assertFalse(body.contains("\"offset\""), "null fields must be omitted: " + body);
             assertEquals("Bearer sk_test_123", api.receivedAuthHeaders.get(0));
-            assertEquals("ateve-java/0.0.1", api.receivedUserAgents.get(0));
+            assertEquals("ateve-java/0.1.0", api.receivedUserAgents.get(0));
         }
     }
 

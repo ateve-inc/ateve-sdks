@@ -22,5 +22,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: js/package-lock.json
+      - name: Use npm with trusted publishing support
+        run: npm install --global npm@11.5.1
       - run: npm ci
       - run: npm publish --access public --provenance

@@ -100,7 +100,7 @@ describe("Ateve JavaScript SDK", () => {
       "Bearer sk_test",
     );
     expect(new Headers(capturedInit?.headers).get("User-Agent")).toBe(
-      "ateve-js/0.0.1",
+      "ateve-js/0.1.0",
     );
     expect(capturedInit?.redirect).toBe("manual");
     expect(response.latencyMs).toBe(412);

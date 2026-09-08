@@ -25,7 +25,7 @@ import {
   VideoItem,
 } from "./types";
 
-export const VERSION = "0.0.1";
+export const VERSION = "0.1.0";
 export const DEFAULT_BASE_URL = "https://api.ateve.ai";
 export const DEFAULT_TIMEOUT_MS = 60_000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 32 * 1024 * 1024;

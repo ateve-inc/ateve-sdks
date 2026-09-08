@@ -102,7 +102,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert payload["content"]["format"] == "markdown"
     assert "dateRange" not in payload
     assert captured[0].headers["Authorization"] == "Bearer sk_test"
-    assert captured[0].headers["User-Agent"] == "ateve-python/0.0.1"
+    assert captured[0].headers["User-Agent"] == "ateve-python/0.1.0"
     assert response.id == "req_01J9ZK3V6XQ8"
     assert response.results[0].published_at is not None
     assert response.usage is not None and response.usage.credits == 3
