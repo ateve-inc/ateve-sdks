@@ -37,3 +37,7 @@ BREAKING CHANGE: Describe the public API change and migration steps.
 - 按改动范围执行必要检查；代码重构使用 `pnpm check`，仅文档改动无需重复完整测试。
 - 执行 `git diff --cached --check`，避免提交空白错误。
 - 不提交环境目录、构建产物、缓存或凭据；不跳过提交钩子。
+
+## 仓库维护 skill
+
+维护 SDK、共享契约、模型生成器、工作区、CI 或发布流程时，使用仓库内的 [ateve-sdk-maintenance](.agents/skills/ateve-sdk-maintenance/SKILL.md)；可通过 `$ateve-sdk-maintenance` 显式调用。该 skill 记录三语言兼容性、原生任务与缓存约束，以及按改动范围执行的验证流程。

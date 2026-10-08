@@ -1,0 +1,3 @@
+interface:
+  display_name: "Ateve SDK 仓库维护"
+  short_description: "维护 Ateve 三语言 SDK、共享契约、模型生成与开发发布流程"
