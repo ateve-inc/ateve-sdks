@@ -1,0 +1,9 @@
+{
+  "id": "req_01J9ZK3V6XQ8",
+  "error": {
+    "code": "invalid_date_range",
+    "message": "date_range must be a preset or YYYY-MM-DD[..YYYY-MM-DD]",
+    "param": "date_range",
+    "type": "invalid_request_error"
+  }
+}

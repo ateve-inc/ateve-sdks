@@ -11,3 +11,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+
+.turbo/
+tools/codegen/generated/
+*.tgz

@@ -10,22 +10,35 @@ permissions:
   id-token: write
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
   publish:
+    needs: checks
     runs-on: ubuntu-latest
     environment: pypi
     defaults:
       run:
-        working-directory: python
+        working-directory: packages/python
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Build distributions
         run: |
-          python -m pip install --upgrade build
-          python -m build
+          uv sync --locked --package ateve
+          uv build --no-build-isolation --package ateve --sdist --wheel --out-dir dist
+      - run: pnpm install --frozen-lockfile && pnpm versions:check && pnpm generate:check
+        working-directory: .
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: python/dist/
+          packages-dir: packages/python/dist/

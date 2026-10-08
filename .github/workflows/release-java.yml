@@ -9,13 +9,23 @@ permissions:
   contents: read
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
   publish:
+    needs: checks
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: java
+        working-directory: packages/java
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile && pnpm versions:check && pnpm generate:check
+        working-directory: .
 
       - name: Set up JDK
         uses: actions/setup-java@v4

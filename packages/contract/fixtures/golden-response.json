@@ -1,0 +1,48 @@
+{
+  "id": "req_01J9ZK3V6XQ8",
+  "created": 1783776000,
+  "latency_ms": 412,
+  "query": {
+    "original": "climate policy analysis",
+    "effective": "climate policy analysis 2026",
+    "auto_tuned": {
+      "freshness_boost": true
+    }
+  },
+  "answer": {
+    "content": "Recent climate policy has focused on...",
+    "citations": [
+      {
+        "url": "https://reuters.com/article/abc",
+        "title": "New climate framework announced",
+        "start_index": 0,
+        "end_index": 42,
+        "quote": "Recent climate policy has focused on"
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "results.#0",
+      "title": "New climate framework announced",
+      "url": "https://reuters.com/article/abc",
+      "display_url": "https://reuters.com/article/abc",
+      "site_name": "Reuters",
+      "language": "en",
+      "published_at": "2026-06-12T08:30:00.000Z",
+      "score": 0.94,
+      "snippet": "The framework introduces...",
+      "images": [],
+      "is_safe": true
+    }
+  ],
+  "total_estimated_matches": 128000,
+  "usage": {
+    "credits": 3,
+    "breakdown": {
+      "search": 1,
+      "rerank": 1,
+      "answer": 1
+    }
+  }
+}

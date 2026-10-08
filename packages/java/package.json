@@ -1,0 +1,12 @@
+{
+  "name": "@ateve/java",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "generate": "node ../../tools/codegen/src/cli.ts sync java",
+    "lint": "mvn --batch-mode --no-transfer-progress validate",
+    "typecheck": "mvn --batch-mode --no-transfer-progress test-compile",
+    "test": "mvn --batch-mode --no-transfer-progress test",
+    "build": "mvn --batch-mode --no-transfer-progress -DskipTests package"
+  }
+}

@@ -1,0 +1,5 @@
+[tool.turbo]
+name = "ateve-python-workspace"
+
+[tool.uv.workspace]
+members = ["packages/python"]

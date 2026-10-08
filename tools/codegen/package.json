@@ -1,0 +1,21 @@
+{
+  "name": "@ateve/codegen",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node src/cli.ts build",
+    "generate:check": "node src/cli.ts check",
+    "lint": "node src/lint.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@ateve/contract": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

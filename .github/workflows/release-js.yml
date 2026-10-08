@@ -9,20 +9,30 @@ permissions:
   id-token: write
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
   publish:
+    needs: checks
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: js
+        working-directory: packages/js
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: https://registry.npmjs.org
-          cache: npm
-          cache-dependency-path: js/package-lock.json
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - name: Use npm with trusted publishing support
         run: npm install --global npm@11.5.1
-      - run: npm ci
-      - run: npm publish --access public --provenance
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+      - run: pnpm versions:check && pnpm generate:check
+        working-directory: .
+      - name: Pack with the public npm name
+        run: pnpm run prepublishOnly && pnpm pack --pack-destination /tmp/ateve-release
+      - name: Publish the verified tarball with npm OIDC
+        run: npm publish /tmp/ateve-release/ateve-*.tgz --access public --provenance

@@ -1,0 +1,29 @@
+{
+  "name": "ateve-sdks",
+  "private": true,
+  "scripts": {
+    "bootstrap": "uv sync --locked --package ateve",
+    "generate": "node tools/codegen/src/turbo.ts run generate",
+    "generate:check": "node tools/codegen/src/turbo.ts run generate:check",
+    "versions:check": "node tools/codegen/src/versions.ts",
+    "lint": "node tools/codegen/src/turbo.ts run lint",
+    "typecheck": "node tools/codegen/src/turbo.ts run typecheck",
+    "test": "node tools/codegen/src/turbo.ts run test",
+    "build": "node tools/codegen/src/turbo.ts run build --filter=!@ateve/codegen",
+    "check": "pnpm versions:check && pnpm locks:check && pnpm generate:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "locks:check": "uv lock --check"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.7"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.10.1",
+      "onFail": "error"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "req_01J9ZK3V6XQB",
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Rate limit exceeded (qps). Retry after 1s.",
+    "type": "rate_limit_error"
+  }
+}

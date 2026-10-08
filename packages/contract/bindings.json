@@ -1,0 +1,58 @@
+{
+  "models": {
+    "ErrorDetail": {
+      "generate": false
+    },
+    "ErrorResponse": {
+      "generate": false
+    },
+    "UserLocation": {
+      "javaImports": [
+        "java.time.ZoneId"
+      ]
+    },
+    "LocaleSettings": {
+      "javaImports": []
+    },
+    "ContentOptions": {
+      "javaImports": []
+    },
+    "SearchRequest": {
+      "javaImports": [
+        "java.time.LocalDate",
+        "java.time.format.DateTimeParseException",
+        "java.util.List",
+        "java.util.Set",
+        "java.util.regex.Matcher",
+        "java.util.regex.Pattern"
+      ]
+    }
+  },
+  "fields": {
+    "ContentOptions.max_characters": {
+      "python": {
+        "strict": true
+      }
+    },
+    "ImageItem.width": {
+      "python": {
+        "required": false
+      }
+    },
+    "ImageItem.height": {
+      "python": {
+        "required": false
+      }
+    },
+    "ImageItem.alt": {
+      "python": {
+        "required": false
+      }
+    },
+    "SearchResult.images": {
+      "python": {
+        "defaultFactory": "list"
+      }
+    }
+  }
+}

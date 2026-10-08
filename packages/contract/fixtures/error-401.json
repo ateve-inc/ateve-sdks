@@ -1,0 +1,8 @@
+{
+  "id": "req_01J9ZK3V6XQ9",
+  "error": {
+    "code": "missing_api_key",
+    "message": "Authorization header must be 'Bearer <api_key>'",
+    "type": "authentication_error"
+  }
+}

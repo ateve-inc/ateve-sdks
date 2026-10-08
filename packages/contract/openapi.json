@@ -1,0 +1,622 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ateve Search API — SDK compatibility baseline",
+    "version": "0.1.0",
+    "description": "Extracted from SDK 0.1.0 models, clients and tests. This is a local compatibility baseline, not the current authoritative server specification. Align with the server in a separate change."
+  },
+  "servers": [
+    {
+      "url": "https://api.ateve.ai"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "ContentFormat": {
+        "type": "string",
+        "enum": [
+          "text",
+          "markdown"
+        ],
+        "description": "Format of raw_content in results."
+      },
+      "UserLocation": {
+        "type": "object",
+        "description": "UserLocation model for POST /v1/search.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "region": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA time zone; each SDK retains its existing platform validation."
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocaleSettings": {
+        "type": "object",
+        "description": "LocaleSettings model for POST /v1/search.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "mkt": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "language": {
+            "type": "string",
+            "pattern": "^[a-z]{2}$"
+          },
+          "user_location": {
+            "$ref": "#/components/schemas/UserLocation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ContentOptions": {
+        "type": "object",
+        "description": "ContentOptions model for POST /v1/search.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "snippet": {
+            "type": "boolean"
+          },
+          "raw_content": {
+            "type": "boolean"
+          },
+          "format": {
+            "$ref": "#/components/schemas/ContentFormat"
+          },
+          "summary": {
+            "type": "boolean"
+          },
+          "highlights": {
+            "type": "boolean"
+          },
+          "max_characters": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Per-result raw content character limit; server default 5000."
+          },
+          "favicon": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SearchRequest": {
+        "type": "object",
+        "description": "SearchRequest model for POST /v1/search.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "date_range": {
+            "type": "string",
+            "description": "day, week, month, year, YYYY-MM-DD, or open/closed YYYY-MM-DD..YYYY-MM-DD range; empty input retains current SDK behavior."
+          },
+          "locale": {
+            "$ref": "#/components/schemas/LocaleSettings"
+          },
+          "include_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 300
+          },
+          "exclude_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 300
+          },
+          "content": {
+            "$ref": "#/components/schemas/ContentOptions"
+          },
+          "safe_search": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "query"
+        ]
+      },
+      "ImageItem": {
+        "type": "object",
+        "description": "ImageItem model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "height": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "alt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "url",
+          "width",
+          "height",
+          "alt"
+        ]
+      },
+      "VideoItem": {
+        "type": "object",
+        "description": "VideoItem model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "thumbnail": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "duration_seconds": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Citation": {
+        "type": "object",
+        "description": "Citation model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "start_index": {
+            "type": "integer"
+          },
+          "end_index": {
+            "type": "integer"
+          },
+          "quote": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "AnswerBlock": {
+        "type": "object",
+        "description": "AnswerBlock model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "QueryInfo": {
+        "type": "object",
+        "description": "QueryInfo model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "original": {
+            "type": "string"
+          },
+          "effective": {
+            "type": "string"
+          },
+          "auto_tuned": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "original"
+        ]
+      },
+      "SearchResult": {
+        "type": "object",
+        "description": "SearchResult model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "display_url": {
+            "type": "string"
+          },
+          "site_name": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "score": {
+            "type": "number"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "raw_content": {
+            "type": "string"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "highlights": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "favicon": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageItem"
+            }
+          },
+          "is_safe": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "images"
+        ]
+      },
+      "UsageBreakdown": {
+        "type": "object",
+        "description": "UsageBreakdown model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "search": {
+            "type": "integer"
+          },
+          "rerank": {
+            "type": "integer"
+          },
+          "answer": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Usage": {
+        "type": "object",
+        "description": "Usage model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "credits": {
+            "type": "integer"
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/UsageBreakdown"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchResponse": {
+        "type": "object",
+        "description": "SearchResponse model for POST /v1/search.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latency_ms": {
+            "type": "integer"
+          },
+          "query": {
+            "$ref": "#/components/schemas/QueryInfo"
+          },
+          "answer": {
+            "$ref": "#/components/schemas/AnswerBlock"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "news": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageItem"
+            }
+          },
+          "videos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoItem"
+            }
+          },
+          "total_estimated_matches": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "created",
+          "latency_ms",
+          "query",
+          "results"
+        ]
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "description": "Structured API error metadata.",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "param": {
+            "type": "string"
+          },
+          "doc_url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "API error envelope.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "paths": {
+    "/v1/search": {
+      "post": {
+        "operationId": "search",
+        "summary": "Execute one search without automatic retries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission or billing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds or HTTP date; surfaced as a hint without retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
