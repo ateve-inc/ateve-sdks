@@ -17,7 +17,7 @@ export interface Schema {
   maxLength?: number;
   maxItems?: number;
   pattern?: string;
-  'x-sdk-kind'?: 'request' | 'response';
+  "x-sdk-kind"?: "request" | "response";
 }
 
 export interface Contract {
@@ -31,22 +31,28 @@ export interface PythonBinding {
   [option: string]: unknown;
   required?: boolean;
   strict?: boolean;
-  defaultFactory?: 'list';
+  defaultFactory?: "list";
 }
 
 export interface Bindings {
-  models?: Record<string, {
-    [option: string]: unknown;
-    generate?: boolean;
-    javaImports?: string[];
-  }>;
-  fields?: Record<string, {
-    [language: string]: unknown;
-    python?: PythonBinding;
-  }>;
+  models?: Record<
+    string,
+    {
+      [option: string]: unknown;
+      generate?: boolean;
+      javaImports?: string[];
+    }
+  >;
+  fields?: Record<
+    string,
+    {
+      [language: string]: unknown;
+      python?: PythonBinding;
+    }
+  >;
 }
 
-export const languages = ['js', 'python', 'java'] as const;
-export type Language = typeof languages[number];
+export const languages = ["js", "python", "java"] as const;
+export type Language = (typeof languages)[number];
 export type ModelFiles = Record<string, string>;
 export type GeneratedModels = Record<Language, ModelFiles>;

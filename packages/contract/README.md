@@ -23,14 +23,14 @@ but do not generate replacements for handwritten exceptions.
 
 ## Compatibility differences
 
-| Behavior | JavaScript | Python | Java |
-|---|---|---|---|
-| Public field names | camelCase | snake_case | camelCase |
-| `published_at` | ISO string | `datetime` | `Instant`; existing millisecond serializer |
-| Missing result images | `[]` | `[]` | `null` |
-| Missing image width/height/alt | normalized to `null` | default `None` | `null` |
-| Unknown response fields | omitted | retained by Pydantic | ignored by Jackson |
-| Requests | existing client validation | frozen Pydantic; forbid extra fields | immutable Builder snapshots |
+| Behavior                       | JavaScript                 | Python                               | Java                                       |
+| ------------------------------ | -------------------------- | ------------------------------------ | ------------------------------------------ |
+| Public field names             | camelCase                  | snake_case                           | camelCase                                  |
+| `published_at`                 | ISO string                 | `datetime`                           | `Instant`; existing millisecond serializer |
+| Missing result images          | `[]`                       | `[]`                                 | `null`                                     |
+| Missing image width/height/alt | normalized to `null`       | default `None`                       | `null`                                     |
+| Unknown response fields        | omitted                    | retained by Pydantic                 | ignored by Jackson                         |
+| Requests                       | existing client validation | frozen Pydantic; forbid extra fields | immutable Builder snapshots                |
 
 Optional and nullable protocol fields are distinct. Python's default `None`
 and non-strict coercions remain supported; `max_characters` stays strict.

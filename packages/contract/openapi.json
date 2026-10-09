@@ -25,10 +25,7 @@
     "schemas": {
       "ContentFormat": {
         "type": "string",
-        "enum": [
-          "text",
-          "markdown"
-        ],
+        "enum": ["text", "markdown"],
         "description": "Format of raw_content in results."
       },
       "UserLocation": {
@@ -153,9 +150,7 @@
           }
         },
         "additionalProperties": false,
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       },
       "ImageItem": {
         "type": "object",
@@ -166,31 +161,17 @@
             "type": "string"
           },
           "width": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": ["integer", "null"]
           },
           "height": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": ["integer", "null"]
           },
           "alt": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         },
         "additionalProperties": true,
-        "required": [
-          "url",
-          "width",
-          "height",
-          "alt"
-        ]
+        "required": ["url", "width", "height", "alt"]
       },
       "VideoItem": {
         "type": "object",
@@ -269,9 +250,7 @@
           }
         },
         "additionalProperties": true,
-        "required": [
-          "original"
-        ]
+        "required": ["original"]
       },
       "SearchResult": {
         "type": "object",
@@ -297,10 +276,7 @@
             "type": "string"
           },
           "published_at": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "score": {
@@ -313,16 +289,10 @@
             "type": "string"
           },
           "summary": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "highlights": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "items": {
               "type": "string"
             }
@@ -337,16 +307,11 @@
             }
           },
           "is_safe": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           }
         },
         "additionalProperties": true,
-        "required": [
-          "images"
-        ]
+        "required": ["images"]
       },
       "UsageBreakdown": {
         "type": "object",
@@ -425,10 +390,7 @@
             }
           },
           "total_estimated_matches": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64"
           },
           "usage": {
@@ -436,13 +398,7 @@
           }
         },
         "additionalProperties": true,
-        "required": [
-          "id",
-          "created",
-          "latency_ms",
-          "query",
-          "results"
-        ]
+        "required": ["id", "created", "latency_ms", "query", "results"]
       },
       "ErrorDetail": {
         "type": "object",

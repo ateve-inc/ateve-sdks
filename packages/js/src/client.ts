@@ -31,11 +31,7 @@ export const DEFAULT_TIMEOUT_MS = 60_000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 32 * 1024 * 1024;
 
 const USER_AGENT = `ateve-js/${VERSION}`;
-const BILLING_CODES = new Set([
-  "insufficient_credit",
-  "credit_limit_exceeded",
-  "payment_required",
-]);
+const BILLING_CODES = new Set(["insufficient_credit", "credit_limit_exceeded", "payment_required"]);
 
 class BodyLimitExceededError extends Error {}
 
@@ -51,6 +47,8 @@ function requireHeaderValue(value: string, name: string): string {
   if (!checked) {
     throw new Error(`${name} must not be blank`);
   }
+  // Header validation intentionally rejects control characters, including NUL.
+  // oxlint-disable-next-line eslint/no-control-regex
   if (/[\r\n\u0000]/.test(checked)) {
     throw new Error(`${name} must not contain CR, LF, or NUL characters`);
   }
@@ -85,10 +83,7 @@ function requireIntegerRange(
   maximum: number,
   name: string,
 ): void {
-  if (
-    value !== undefined &&
-    (!Number.isInteger(value) || value < minimum || value > maximum)
-  ) {
+  if (value !== undefined && (!Number.isInteger(value) || value < minimum || value > maximum)) {
     throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   }
 }
@@ -114,11 +109,7 @@ function parseCalendarDate(value: string): number {
 }
 
 function validateDateRange(value: string | undefined): void {
-  if (
-    value === undefined ||
-    value === "" ||
-    ["day", "week", "month", "year"].includes(value)
-  ) {
+  if (value === undefined || value === "" || ["day", "week", "month", "year"].includes(value)) {
     return;
   }
   if (!value.includes("..")) {
@@ -169,19 +160,14 @@ function validateRequest(request: SearchRequest): void {
   if (request.locale?.mkt !== undefined && !/^[A-Z]{2}$/.test(request.locale.mkt)) {
     throw new Error("locale.mkt must be an uppercase ISO 3166-1 alpha-2 code");
   }
-  if (
-    request.locale?.language !== undefined &&
-    !/^[a-z]{2}$/.test(request.locale.language)
-  ) {
+  if (request.locale?.language !== undefined && !/^[a-z]{2}$/.test(request.locale.language)) {
     throw new Error("locale.language must be a lowercase ISO 639-1 code");
   }
   if (
     request.locale?.userLocation?.country !== undefined &&
     !/^[A-Z]{2}$/.test(request.locale.userLocation.country)
   ) {
-    throw new Error(
-      "locale.userLocation.country must be an uppercase ISO 3166-1 alpha-2 code",
-    );
+    throw new Error("locale.userLocation.country must be an uppercase ISO 3166-1 alpha-2 code");
   }
   if (request.locale?.userLocation?.timezone !== undefined) {
     validateTimeZone(request.locale.userLocation.timezone);
@@ -342,9 +328,7 @@ function result(value: unknown): SearchResult {
     }),
     ...(item.highlights === null && { highlights: null }),
     ...(Array.isArray(item.highlights) && {
-      highlights: item.highlights.filter(
-        (entry): entry is string => typeof entry === "string",
-      ),
+      highlights: item.highlights.filter((entry): entry is string => typeof entry === "string"),
     }),
     ...(string(item.favicon) !== undefined && { favicon: string(item.favicon)! }),
     images: Array.isArray(item.images) ? item.images.map(image) : [],
@@ -433,7 +417,11 @@ function parseRetryAfter(value: string | null): number | undefined {
 function errorOptions(response: Response, payload: Record<string, unknown>): ApiErrorOptions {
   const details = record(payload.error);
   const options: ApiErrorOptions = { statusCode: response.status };
-  assign(options, "requestId", string(payload.id) ?? response.headers.get("X-Request-Id") ?? undefined);
+  assign(
+    options,
+    "requestId",
+    string(payload.id) ?? response.headers.get("X-Request-Id") ?? undefined,
+  );
   assign(options, "code", string(details.code));
   assign(options, "param", string(details.param));
   assign(options, "type", string(details.type));
@@ -499,12 +487,7 @@ function knownPreSendFetchFailure(error: unknown): boolean {
 
 async function readLimited(response: Response, maximum: number): Promise<Uint8Array> {
   const declared = response.headers.get("Content-Length");
-  if (
-    maximum > 0 &&
-    declared !== null &&
-    /^\d+$/.test(declared) &&
-    Number(declared) > maximum
-  ) {
+  if (maximum > 0 && declared !== null && /^\d+$/.test(declared) && Number(declared) > maximum) {
     await response.body?.cancel();
     throw new BodyLimitExceededError();
   }
@@ -574,10 +557,7 @@ export default class Ateve {
     if (!Number.isInteger(this.maxResponseBytes) || this.maxResponseBytes < 0) {
       throw new Error("maxResponseBytes must be a non-negative integer");
     }
-    if (
-      !Number.isInteger(this.maxConcurrentRequests) ||
-      this.maxConcurrentRequests < 0
-    ) {
+    if (!Number.isInteger(this.maxConcurrentRequests) || this.maxConcurrentRequests < 0) {
       throw new Error("maxConcurrentRequests must be a non-negative integer");
     }
     const defaultFetch = globalThis.fetch?.bind(globalThis);
@@ -588,15 +568,9 @@ export default class Ateve {
     this.#authorization = `Bearer ${apiKey}`;
   }
 
-  async search(
-    request: SearchRequest,
-    options: RequestOptions = {},
-  ): Promise<SearchResponse> {
+  async search(request: SearchRequest, options: RequestOptions = {}): Promise<SearchResponse> {
     validateRequest(request);
-    if (
-      this.maxConcurrentRequests > 0 &&
-      this.#inFlight >= this.maxConcurrentRequests
-    ) {
+    if (this.maxConcurrentRequests > 0 && this.#inFlight >= this.maxConcurrentRequests) {
       throw new ConcurrencyLimitError(this.maxConcurrentRequests);
     }
     if (options.signal?.aborted) {
@@ -652,8 +626,7 @@ export default class Ateve {
       } catch (error) {
         if (error instanceof BodyLimitExceededError) {
           throw new ApiConnectionError(
-            `Response from ${this.baseUrl} exceeded ` +
-              `maxResponseBytes=${this.maxResponseBytes}`,
+            `Response from ${this.baseUrl} exceeded ` + `maxResponseBytes=${this.maxResponseBytes}`,
             {
               baseUrl: this.baseUrl,
               requestMayHaveBeenSent: true,

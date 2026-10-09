@@ -1,7 +1,7 @@
 {
   "name": "@ateve/java",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "scripts": {
     "generate": "node ../../tools/codegen/src/cli.ts sync java",
     "lint": "mvn --batch-mode --no-transfer-progress validate",

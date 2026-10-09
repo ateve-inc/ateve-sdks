@@ -144,16 +144,16 @@ failure are classified as possibly sent.
 
 ## Configuration
 
-| Builder | Default | Notes |
-|---|---|---|
-| `apiKey(String)` | env `ATEVE_API_KEY` | required |
-| `baseUrl(String)` | env `ATEVE_BASE_URL`, then `https://api.ateve.ai` | one endpoint; no SDK failover |
-| `timeout(Duration)` | 60s | timeout for the single request |
-| `connectTimeout(Duration)` | 5s | ignored when `httpClient` is supplied |
-| `maxResponseBytes(long)` | 32 MiB | hard per-response buffer cap; `0` = unlimited |
-| `executor(Executor)` | shared default transport | creates one client transport using a borrowed executor |
-| `maxConcurrentRequests(int)` | `0` = unlimited | optional fail-fast bulkhead; no queue |
-| `httpClient(HttpClient)` | process-wide shared JDK client | caller-owned transport used as-is |
+| Builder                      | Default                                           | Notes                                                  |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| `apiKey(String)`             | env `ATEVE_API_KEY`                               | required                                               |
+| `baseUrl(String)`            | env `ATEVE_BASE_URL`, then `https://api.ateve.ai` | one endpoint; no SDK failover                          |
+| `timeout(Duration)`          | 60s                                               | timeout for the single request                         |
+| `connectTimeout(Duration)`   | 5s                                                | ignored when `httpClient` is supplied                  |
+| `maxResponseBytes(long)`     | 32 MiB                                            | hard per-response buffer cap; `0` = unlimited          |
+| `executor(Executor)`         | shared default transport                          | creates one client transport using a borrowed executor |
+| `maxConcurrentRequests(int)` | `0` = unlimited                                   | optional fail-fast bulkhead; no queue                  |
+| `httpClient(HttpClient)`     | process-wide shared JDK client                    | caller-owned transport used as-is                      |
 
 ## Build & test
 

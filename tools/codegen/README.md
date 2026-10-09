@@ -42,6 +42,11 @@ wheel/sdist files stay in `packages/python/dist`, and `.venv` is never cached.
 Automatic `AGENTS.md` updates are disabled with `agentGuidance: false` so
 validation commands do not modify repository guidance files.
 
+Root oxfmt tasks are uncached. Formatting excludes generated models and
+`.generated-models.json` manifests so `generate:check` keeps comparing the
+generator's exact output. Formatting scripts and templates never automatically
+regenerate models; run the read-only drift check after changing tooling.
+
 After the root build, run `node tools/codegen/src/check-artifacts.ts` from
 the root to verify npm ESM/CJS, Python wheel/sdist and Java JAR contents and
 run packaged-client smoke calls. It uses temporary files and a local HTTP

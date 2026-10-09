@@ -2,11 +2,11 @@
 
 Official SDKs for the Ateve Search API (`POST /v1/search`).
 
-| SDK | Directory | Registry | Package |
-|---|---|---|---|
-| Java | [`packages/java/`](packages/java/) | Maven Central | `ai.ateve:ateve-java` |
-| JavaScript / TypeScript | [`packages/js/`](packages/js/) | npm | `ateve` |
-| Python | [`packages/python/`](packages/python/) | PyPI | `ateve` |
+| SDK                     | Directory                              | Registry      | Package               |
+| ----------------------- | -------------------------------------- | ------------- | --------------------- |
+| Java                    | [`packages/java/`](packages/java/)     | Maven Central | `ai.ateve:ateve-java` |
+| JavaScript / TypeScript | [`packages/js/`](packages/js/)         | npm           | `ateve`               |
+| Python                  | [`packages/python/`](packages/python/) | PyPI          | `ateve`               |
 
 Each search call sends one HTTP request. Clients do not automatically retry or
 fail over: a timeout can occur after a billable search has executed. Retry,
@@ -44,21 +44,34 @@ synchronizes only Python models. Python builds use the locked environment's
 Hatchling with `--no-build-isolation`, so cached wheel/sdist outputs include
 the build backend version recorded in `uv.lock`.
 
-| Root command | Purpose |
-|---|---|
-| `pnpm generate` | Generate and synchronize all three model sets |
-| `pnpm generate:check` | Read-only comparison of models and contract |
-| `pnpm locks:check` | Verify uv workspace metadata matches its lockfile |
-| `pnpm versions:check` | Check package/client/contract versions and release tags |
-| `pnpm lint` / `pnpm typecheck` | Contract, tooling and language checks |
-| `pnpm test` | SDK regression and generator tests, always executed |
-| `pnpm build` | npm output, Python wheel/sdist, Java JAR |
-| `pnpm check` | Version, generation, static checks, tests and builds |
+| Root command                        | Purpose                                                          |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `pnpm generate`                     | Generate and synchronize all three model sets                    |
+| `pnpm generate:check`               | Read-only comparison of models and contract                      |
+| `pnpm locks:check`                  | Verify uv workspace metadata matches its lockfile                |
+| `pnpm versions:check`               | Check package/client/contract versions and release tags          |
+| `pnpm format` / `pnpm format:check` | Write / check formatting with oxfmt                              |
+| `pnpm lint` / `pnpm typecheck`      | Contract, tooling and language checks                            |
+| `pnpm test`                         | SDK regression and generator tests, always executed              |
+| `pnpm build`                        | npm output, Python wheel/sdist, Java JAR                         |
+| `pnpm check`                        | Formatting, version, generation, static checks, tests and builds |
 
 Turborepo orchestrates native tools and caches generation/build outputs. It
 does not manage Python/Maven dependencies or change how consumers install SDKs.
 Root tasks include actual toolchain versions in cache keys. Tests, model
 comparisons, publishing and signing are not cached.
+
+Formatting runs once from the workspace root. `format` and `format:check` are
+registered Turbo root tasks with caching disabled; `pnpm check` runs the read-only
+formatting task before the other checks, including in PR and release CI.
+Oxfmt formats supported files such as JS/TS, JSON, YAML and Markdown. Generated
+models and their manifests are excluded to preserve the generator's exact output;
+Python and Java source formatting remains outside oxfmt's scope.
+
+JS lint runs oxlint over SDK sources, tests and build configuration, with correctness
+rules enforced and warnings rejected. Typechecking remains a separate `tsc --noEmit`
+task. Python lint/typecheck run Ruff/mypy; Java runs Maven `validate`/`test-compile`.
+Tooling lint checks Node script syntax, and tooling typecheck checks strict TypeScript.
 
 ## Shared API models
 

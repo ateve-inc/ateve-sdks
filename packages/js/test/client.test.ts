@@ -12,10 +12,7 @@ import Ateve, {
 
 const goldenResponse = sharedGoldenResponse;
 
-function jsonResponse(
-  value: unknown = goldenResponse,
-  init: ResponseInit = {},
-): Response {
+function jsonResponse(value: unknown = goldenResponse, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(value), {
     status: 200,
     ...init,
@@ -59,17 +56,11 @@ describe("Ateve JavaScript SDK", () => {
     expect(wire.content).not.toHaveProperty("images");
     expect(wire).not.toHaveProperty("topic");
     expect(wire).not.toHaveProperty("dateRange");
-    expect(new Headers(capturedInit?.headers).get("Authorization")).toBe(
-      "Bearer sk_test",
-    );
-    expect(new Headers(capturedInit?.headers).get("User-Agent")).toBe(
-      "ateve-js/0.1.0",
-    );
+    expect(new Headers(capturedInit?.headers).get("Authorization")).toBe("Bearer sk_test");
+    expect(new Headers(capturedInit?.headers).get("User-Agent")).toBe("ateve-js/0.1.0");
     expect(capturedInit?.redirect).toBe("manual");
     expect(response.latencyMs).toBe(412);
-    expect(response.results[0]?.displayUrl).toBe(
-      "https://reuters.com/article/abc",
-    );
+    expect(response.results[0]?.displayUrl).toBe("https://reuters.com/article/abc");
     expect(response.usage?.credits).toBe(3);
   });
 
@@ -136,9 +127,7 @@ describe("Ateve JavaScript SDK", () => {
       );
     const client = new Ateve({ apiKey: "sk_test", fetch });
 
-    await expect(client.search({ query: "q" })).rejects.toBeInstanceOf(
-      PaymentRequiredError,
-    );
+    await expect(client.search({ query: "q" })).rejects.toBeInstanceOf(PaymentRequiredError);
   });
 
   it("uses the response request ID for non-JSON errors without leaking body", async () => {
@@ -179,8 +168,7 @@ describe("Ateve JavaScript SDK", () => {
   });
 
   it("types structurally incomplete 2xx responses as possibly billed", async () => {
-    const fetch: Fetch = async () =>
-      jsonResponse({ id: "req_incomplete" }, { status: 200 });
+    const fetch: Fetch = async () => jsonResponse({ id: "req_incomplete" }, { status: 200 });
     const client = new Ateve({
       apiKey: "sk_test",
       baseUrl: "https://api.test",
@@ -262,9 +250,7 @@ describe("Ateve JavaScript SDK", () => {
 
     const first = client.search({ query: "first" });
     await Promise.resolve();
-    await expect(client.search({ query: "second" })).rejects.toBeInstanceOf(
-      ConcurrencyLimitError,
-    );
+    await expect(client.search({ query: "second" })).rejects.toBeInstanceOf(ConcurrencyLimitError);
     release();
     await first;
     await client.search({ query: "third" });
@@ -275,9 +261,7 @@ describe("Ateve JavaScript SDK", () => {
     const fetch: Fetch = async () => jsonResponse();
     const client = new Ateve({ apiKey: "sk_test", fetch });
 
-    expect(() => new Ateve({ apiKey: "key\r\nX-Evil: injected", fetch })).toThrow(
-      "CR, LF",
-    );
+    expect(() => new Ateve({ apiKey: "key\r\nX-Evil: injected", fetch })).toThrow("CR, LF");
     expect(
       () =>
         new Ateve({
@@ -287,12 +271,16 @@ describe("Ateve JavaScript SDK", () => {
         }),
     ).toThrow("user-info");
     await expect(client.search({ query: "q", offset: 100 })).rejects.toThrow("offset");
-    await expect(client.search({ query: "q", content: { maxCharacters: 0 } })).rejects.toThrow("maxCharacters");
-    await expect(client.search({ query: "q", offset: 99, content: { maxCharacters: 8000 } })).resolves.toBeDefined();
-    await expect(client.search({ query: " ", limit: 0 })).rejects.toThrow("query");
+    await expect(client.search({ query: "q", content: { maxCharacters: 0 } })).rejects.toThrow(
+      "maxCharacters",
+    );
     await expect(
-      client.search({ query: "q", dateRange: "2026-02-31" }),
-    ).rejects.toThrow("calendar date");
+      client.search({ query: "q", offset: 99, content: { maxCharacters: 8000 } }),
+    ).resolves.toBeDefined();
+    await expect(client.search({ query: " ", limit: 0 })).rejects.toThrow("query");
+    await expect(client.search({ query: "q", dateRange: "2026-02-31" })).rejects.toThrow(
+      "calendar date",
+    );
     await expect(
       client.search({
         query: "q",

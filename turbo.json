@@ -7,20 +7,18 @@
     "pyproject.toml",
     "uv.lock"
   ],
-  "globalEnv": [
-    "ATEVE_TOOLCHAIN",
-    "UV_PYTHON",
-    "JAVA_HOME",
-    "MAVEN_OPTS"
-  ],
+  "globalEnv": ["ATEVE_TOOLCHAIN", "UV_PYTHON", "JAVA_HOME", "MAVEN_OPTS"],
   "tasks": {
+    "//#format": {
+      "cache": false,
+      "outputs": []
+    },
+    "//#format:check": {
+      "cache": false,
+      "outputs": []
+    },
     "build": {
-      "outputs": [
-        "dist/**",
-        "target/**",
-        "!target/surefire-reports/**",
-        "!target/maven-status/**"
-      ]
+      "outputs": ["dist/**", "target/**", "!target/surefire-reports/**", "!target/maven-status/**"]
     },
     "@ateve/codegen#build": {
       "inputs": [
@@ -28,17 +26,11 @@
         "$TURBO_ROOT$/packages/contract/openapi.json",
         "$TURBO_ROOT$/packages/contract/bindings.json"
       ],
-      "outputs": [
-        "generated/**"
-      ]
+      "outputs": ["generated/**"]
     },
     "generate": {
-      "dependsOn": [
-        "@ateve/codegen#build"
-      ],
-      "inputs": [
-        "package.json"
-      ],
+      "dependsOn": ["@ateve/codegen#build"],
+      "inputs": ["package.json"],
       "outputs": [
         ".generated-models.json",
         "src/types.ts",
@@ -49,23 +41,15 @@
     },
     "generate:check": {
       "description": "Validate the contract and compare committed models without writing files",
-      "dependsOn": [
-        "@ateve/contract#lint"
-      ],
+      "dependsOn": ["@ateve/contract#lint"],
       "cache": false
     },
     "@ateve/contract#lint": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/tools/codegen/src/**"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tools/codegen/src/**"],
       "outputs": []
     },
     "@ateve/codegen#typecheck": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/packages/contract/validate-fixtures.ts"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/contract/validate-fixtures.ts"],
       "outputs": []
     },
     "lint": {
@@ -78,64 +62,26 @@
       "cache": false
     },
     "@ateve/java#build": {
-      "dependsOn": [
-        "test"
-      ],
-      "outputs": [
-        "target/**",
-        "!target/surefire-reports/**",
-        "!target/maven-status/**"
-      ]
+      "dependsOn": ["test"],
+      "outputs": ["target/**", "!target/surefire-reports/**", "!target/maven-status/**"]
     },
     "ateve#generate": {
-      "dependsOn": [
-        "@ateve/codegen#build"
-      ],
-      "command": [
-        "node",
-        "../../tools/codegen/src/cli.ts",
-        "sync",
-        "python"
-      ],
-      "inputs": [
-        "pyproject.toml"
-      ],
-      "outputs": [
-        ".generated-models.json",
-        "src/ateve/models.py",
-        "src/ateve/_model_exports.py"
-      ]
+      "dependsOn": ["@ateve/codegen#build"],
+      "command": ["node", "../../tools/codegen/src/cli.ts", "sync", "python"],
+      "inputs": ["pyproject.toml"],
+      "outputs": [".generated-models.json", "src/ateve/models.py", "src/ateve/_model_exports.py"]
     },
     "ateve#typecheck": {
-      "dependsOn": [
-        "check"
-      ],
+      "dependsOn": ["check"],
       "outputs": []
     },
     "ateve#build": {
-      "command": [
-        "uv",
-        "build",
-        "--no-build-isolation",
-        "--package",
-        "ateve",
-        "--out-dir",
-        "dist"
-      ],
+      "command": ["uv", "build", "--no-build-isolation", "--package", "ateve", "--out-dir", "dist"],
       "cache": true,
-      "outputs": [
-        "dist/**"
-      ]
+      "outputs": ["dist/**"]
     },
     "ateve#check": {
-      "command": [
-        "uv",
-        "run",
-        "--locked",
-        "--package",
-        "ateve",
-        "mypy"
-      ],
+      "command": ["uv", "run", "--locked", "--package", "ateve", "mypy"],
       "outputs": []
     }
   },
@@ -143,7 +89,5 @@
     "experimentalPythonWorkspaces": true,
     "experimentalTaskCommand": true
   },
-  "globalPassThroughEnv": [
-    "UV_CACHE_DIR"
-  ]
+  "globalPassThroughEnv": ["UV_CACHE_DIR"]
 }

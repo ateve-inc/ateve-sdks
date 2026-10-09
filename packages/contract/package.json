@@ -1,8 +1,14 @@
 {
   "name": "@ateve/contract",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "type": "module",
-  "scripts": { "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts" },
-  "devDependencies": { "@redocly/cli": "^2.0.0", "ajv": "^8.17.1", "ajv-formats": "^3.0.1" }
+  "scripts": {
+    "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.0.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
 }

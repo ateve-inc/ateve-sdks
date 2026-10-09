@@ -1,7 +1,7 @@
 {
   "name": "@ateve/codegen",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "node src/cli.ts build",

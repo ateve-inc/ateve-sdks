@@ -7,9 +7,7 @@
       "generate": false
     },
     "UserLocation": {
-      "javaImports": [
-        "java.time.ZoneId"
-      ]
+      "javaImports": ["java.time.ZoneId"]
     },
     "LocaleSettings": {
       "javaImports": []

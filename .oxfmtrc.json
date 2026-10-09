@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "packages/*/.generated-models.json",
+    "packages/js/src/types.ts",
+    "packages/python/src/ateve/models.py",
+    "packages/python/src/ateve/_model_exports.py",
+    "packages/java/src/main/java/ai/ateve/models/**"
+  ]
+}

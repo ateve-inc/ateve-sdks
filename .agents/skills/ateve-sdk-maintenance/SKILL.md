@@ -13,13 +13,13 @@ description: 维护 Ateve SDKs 仓库的 JavaScript、Python、Java SDK、共享
 
 ## 工作区与执行入口
 
-| 路径 | 开发职责与任务名称 |
-| --- | --- |
-| `packages/contract` | 私有契约、语言映射和共享样例；`@ateve/contract` |
-| `tools/codegen` | 模型生成、工具链指纹、版本与产物检查；`@ateve/codegen` |
-| `packages/js` | JS/TS 客户端；工作区名 `@ateve/js`，发布名 `ateve` |
-| `packages/python` | 原生 uv 工作区成员 `ateve`；Hatchling 打包 |
-| `packages/java` | Maven 项目 `ai.ateve:ateve-java`；私有任务入口 `@ateve/java` |
+| 路径                | 开发职责与任务名称                                           |
+| ------------------- | ------------------------------------------------------------ |
+| `packages/contract` | 私有契约、语言映射和共享样例；`@ateve/contract`              |
+| `tools/codegen`     | 模型生成、工具链指纹、版本与产物检查；`@ateve/codegen`       |
+| `packages/js`       | JS/TS 客户端；工作区名 `@ateve/js`，发布名 `ateve`           |
+| `packages/python`   | 原生 uv 工作区成员 `ateve`；Hatchling 打包                   |
+| `packages/java`     | Maven 项目 `ai.ateve:ateve-java`；私有任务入口 `@ateve/java` |
 
 根目录运行：
 
@@ -32,6 +32,9 @@ pnpm check
 - 开发工具需要 Node 24+、pnpm、uv/Python、Maven/JDK；确切版本读取根清单与 CI。使用系统已安装工具，缺少环境时报告具体缺项。
 - pnpm 与根 `uv.lock` 分别锁定 JS 和 Python 开发依赖；主动升级时更新对应锁文件，普通安装保持冻结。Python 环境位于根 `.venv`。
 - 根 `pnpm lint`、`typecheck`、`test`、`build` 经过工具链指纹入口。局部 JS/Java/生成器检查可用 `pnpm --filter @ateve/js test` 等；Python 原生检查从 `packages/python` 运行 `uv run --locked pytest`、`uv run --locked mypy`。
+- JS `lint` 使用 oxlint 检查源码、测试及构建配置，正确性规则报错且拒绝警告；`typecheck` 独立使用 `tsc --noEmit`。Python 使用 Ruff/mypy，Java 使用 Maven `validate`/`test-compile`，工具脚本 lint 为 Node 语法检查。
+- 根 `pnpm format` 写入 oxfmt 格式，`pnpm format:check` 只读检查；两者也注册为不缓存的 Turbo 根任务，`pnpm check` 通过 Turbo 先执行格式检查，CI 复用此入口。oxfmt 不负责 Python/Java 源码格式化。
+- 格式化排除生成模型和 `.generated-models.json`；通过契约/生成器管理这些文件，不为通过格式检查而手改生成输出。维护排除规则时同步核对生成清单。
 - SDK 继续支持各自原生构建，已发布 SDK 的安装和调用不依赖 Node、Turbo 或契约包。
 
 ## 修改契约与生成模型
@@ -69,7 +72,7 @@ pnpm check
 ## 验证与交付
 
 - 修改前记录相关原有检查结果；已有失败单独说明，不通过削弱断言掩盖。仅文档改动做结构、引用和 diff 检查，无需重复全套 SDK 测试。
-- 代码改动运行 `pnpm check`：统一版本、uv 锁、契约/生成一致性、静态检查、测试、构建。按涉及行为补充有效回归验证。
+- 代码改动运行 `pnpm check`：格式、统一版本、uv 锁、契约/生成一致性、静态检查、测试、构建。按涉及行为补充有效回归验证。
 - 改动构建、打包或公共导出时，根构建后运行 `node tools/codegen/src/check-artifacts.ts`，检查 npm 包、Python wheel/sdist、Java JAR，并从产物执行本地调用示例。
 - 结构、依赖或开发流程变更，从临时干净检出执行冻结安装、`pnpm bootstrap`、`pnpm check`，核对 CI 当前 Python/JDK 矩阵及 Node 约束。
 - 提交前审查生成 diff 和暂存范围，执行 `git diff --cached --check`，遵守 [Conventional Commits 规范](../../../AGENT.md)，不提交环境、产物或凭据。

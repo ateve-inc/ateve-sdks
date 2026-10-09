@@ -2,28 +2,29 @@
   "name": "@ateve/js",
   "version": "0.1.0",
   "description": "Official JavaScript and TypeScript SDK for the Ateve Search API",
+  "keywords": [
+    "AI",
+    "RAG",
+    "ateve",
+    "search"
+  ],
+  "homepage": "https://ateve.ai",
+  "bugs": {
+    "url": "https://github.com/ateve-inc/ateve-sdks/issues"
+  },
   "license": "Apache-2.0",
   "author": "Ateve Inc.",
-  "keywords": [
-    "ateve",
-    "search",
-    "RAG",
-    "AI"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ateve-inc/ateve-sdks.git",
     "directory": "packages/js"
-  },
-  "homepage": "https://ateve.ai",
-  "bugs": {
-    "url": "https://github.com/ateve-inc/ateve-sdks/issues"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -35,26 +36,26 @@
     },
     "./package.json": "./package.json"
   },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=22"
+  "publishConfig": {
+    "name": "ateve",
+    "access": "public"
   },
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "node ../../tools/codegen/src/versions.ts && node ../../tools/codegen/src/cli.ts check && npm run typecheck && npm test && npm run build",
-    "lint": "tsc --noEmit",
+    "prepublishOnly": "node ../../tools/codegen/src/versions.ts && node ../../tools/codegen/src/cli.ts check && npm run lint && npm run typecheck && npm test && npm run build",
+    "lint": "oxlint --max-warnings=0 src test tsup.config.ts",
     "generate": "node ../../tools/codegen/src/cli.ts sync js"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "oxlint": "^1.87.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   },
-  "publishConfig": {
-    "name": "ateve",
-    "access": "public"
+  "engines": {
+    "node": ">=22"
   }
 }

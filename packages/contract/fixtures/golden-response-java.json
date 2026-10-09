@@ -33,10 +33,7 @@
       "score": 0.94,
       "snippet": "The framework introduces...",
       "summary": "A one-paragraph summary of the article.",
-      "highlights": [
-        "framework introduces",
-        "carbon pricing"
-      ],
+      "highlights": ["framework introduces", "carbon pricing"],
       "favicon": "https://reuters.com/favicon.ico",
       "images": [
         {

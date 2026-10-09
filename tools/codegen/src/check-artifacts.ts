@@ -1,12 +1,12 @@
-import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { spawn, spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
-import { createServer } from 'node:http';
-import path from 'node:path';
-import { root } from './generator.ts';
+import assert from "node:assert/strict";
+import { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { spawn, spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+import { createServer } from "node:http";
+import path from "node:path";
+import { root } from "./generator.ts";
 
 interface PackagedSDK {
   default: new (options: { apiKey: string; fetch: () => Promise<Response> }) => {
@@ -15,43 +15,67 @@ interface PackagedSDK {
 }
 
 function run(command: string, args: string[], cwd = root): string {
-  const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
-  if (result.error || result.status !== 0) throw new Error(`${command} failed: ${result.error ?? ''}\n${result.stdout}\n${result.stderr}`);
+  const result = spawnSync(command, args, { cwd, encoding: "utf8" });
+  if (result.error || result.status !== 0)
+    throw new Error(`${command} failed: ${result.error ?? ""}\n${result.stdout}\n${result.stderr}`);
   return result.stdout;
 }
-const temporary = mkdtempSync(path.join(tmpdir(), 'ateve-artifacts-'));
-const fixture: { id: string } = JSON.parse(readFileSync(path.join(root, 'packages/contract/fixtures/golden-response.json'), 'utf8'));
+const temporary = mkdtempSync(path.join(tmpdir(), "ateve-artifacts-"));
+const fixture: { id: string } = JSON.parse(
+  readFileSync(path.join(root, "packages/contract/fixtures/golden-response.json"), "utf8"),
+);
 try {
   const packDirectory = path.resolve(process.argv[2] ?? temporary);
-  if (!process.argv[2]) run('pnpm', ['--filter', '@ateve/js', 'pack', '--pack-destination', temporary]);
+  if (!process.argv[2])
+    run("pnpm", ["--filter", "@ateve/js", "pack", "--pack-destination", temporary]);
   const tgz = readdirSync(packDirectory).find((file) => /^ateve-.*\.tgz$/.test(file));
-  assert.ok(tgz, 'npm package was not produced');
+  assert.ok(tgz, "npm package was not produced");
   const npmArchive = path.join(packDirectory, tgz);
-  const contents = run('tar', ['-tzf', npmArchive]);
+  const contents = run("tar", ["-tzf", npmArchive]);
   assert.match(contents, /package\/dist\/index.d.ts/);
   assert.doesNotMatch(contents, /package\/(?:src|test|contract|tools)\//);
-  run('tar', ['-xzf', npmArchive, '-C', temporary]);
-  const packagePath = path.join(temporary, 'package');
-  const npmManifest: { name: string; version: string } = JSON.parse(readFileSync(path.join(packagePath, 'package.json'), 'utf8'));
-  assert.equal(npmManifest.name, 'ateve', 'npm tarball must retain its public name');
-  const sourceManifest: { version: string } = JSON.parse(readFileSync(path.join(root, 'packages/js/package.json'), 'utf8'));
+  run("tar", ["-xzf", npmArchive, "-C", temporary]);
+  const packagePath = path.join(temporary, "package");
+  const npmManifest: { name: string; version: string } = JSON.parse(
+    readFileSync(path.join(packagePath, "package.json"), "utf8"),
+  );
+  assert.equal(npmManifest.name, "ateve", "npm tarball must retain its public name");
+  const sourceManifest: { version: string } = JSON.parse(
+    readFileSync(path.join(root, "packages/js/package.json"), "utf8"),
+  );
   assert.equal(npmManifest.version, sourceManifest.version);
-  const cjs: PackagedSDK = createRequire(import.meta.url)(path.join(packagePath, 'dist/index.js'));
-  const esm: PackagedSDK = await import(pathToFileURL(path.join(packagePath, 'dist/index.mjs')).href);
+  const cjs: PackagedSDK = createRequire(import.meta.url)(path.join(packagePath, "dist/index.js"));
+  const esm: PackagedSDK = await import(
+    pathToFileURL(path.join(packagePath, "dist/index.mjs")).href
+  );
   for (const sdk of [cjs, esm]) {
     let hits = 0;
-    const client = new sdk.default({ apiKey: 'sk_test', fetch: async () => { hits++; return new Response(JSON.stringify(fixture)); } });
-    const response = await client.search({ query: 'artifact smoke test' });
+    const client = new sdk.default({
+      apiKey: "sk_test",
+      fetch: async () => {
+        hits++;
+        return new Response(JSON.stringify(fixture));
+      },
+    });
+    const response = await client.search({ query: "artifact smoke test" });
     assert.equal(response.id, fixture.id);
     assert.equal(hits, 1);
   }
 
-  const python = path.join(root, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
-  const pythonDist = path.join(root, 'packages/python/dist');
-  const wheel = readdirSync(pythonDist).find((file) => file.endsWith('.whl'));
-  const sdist = readdirSync(pythonDist).find((file) => file.endsWith('.tar.gz'));
-  assert.ok(wheel && sdist, 'Python wheel/sdist were not produced');
-  run(python, ['-c', `
+  const python = path.join(
+    root,
+    ".venv",
+    process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
+  );
+  const pythonDist = path.join(root, "packages/python/dist");
+  const wheel = readdirSync(pythonDist).find((file) => file.endsWith(".whl"));
+  const sdist = readdirSync(pythonDist).find((file) => file.endsWith(".tar.gz"));
+  assert.ok(wheel && sdist, "Python wheel/sdist were not produced");
+  run(
+    python,
+    [
+      "-c",
+      `
 import sys, zipfile, tarfile, json, asyncio
 sys.path.insert(0, sys.argv[1])
 with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -77,22 +101,42 @@ async def check_async():
             assert (await client.search('artifact smoke test')).id == body['id']
 asyncio.run(check_async())
 assert len(hits) == 2
-`, path.join(pythonDist, wheel), path.join(pythonDist, sdist), JSON.stringify(fixture)], temporary);
+`,
+      path.join(pythonDist, wheel),
+      path.join(pythonDist, sdist),
+      JSON.stringify(fixture),
+    ],
+    temporary,
+  );
 
-  const javaDirectory = path.join(root, 'packages/java');
-  const jar = readdirSync(path.join(javaDirectory, 'target')).find((file) => /^ateve-java-.*\.jar$/.test(file) && !/-sources|-javadoc/.test(file));
-  assert.ok(jar, 'Java JAR was not produced');
+  const javaDirectory = path.join(root, "packages/java");
+  const jar = readdirSync(path.join(javaDirectory, "target")).find(
+    (file) => /^ateve-java-.*\.jar$/.test(file) && !/-sources|-javadoc/.test(file),
+  );
+  assert.ok(jar, "Java JAR was not produced");
   const javaHome = process.env.JAVA_HOME;
-  const executable = (name: string): string => javaHome ? path.join(javaHome, 'bin', name) : name;
-  const jarPath = path.join(javaDirectory, 'target', jar);
-  const jarContents = run(executable('jar'), ['tf', jarPath]);
+  const executable = (name: string): string => (javaHome ? path.join(javaHome, "bin", name) : name);
+  const jarPath = path.join(javaDirectory, "target", jar);
+  const jarContents = run(executable("jar"), ["tf", jarPath]);
   assert.match(jarContents, /ai\/ateve\/models\/SearchRequest.class/);
   assert.doesNotMatch(jarContents, /(?:MockApi|Fixtures|AteveClientTest)\.class/);
-  const classpathFile = path.join(temporary, 'classpath.txt');
-  run('mvn', ['--batch-mode', '--no-transfer-progress', 'dependency:build-classpath', '-DincludeScope=runtime', `-Dmdep.outputFile=${classpathFile}`], javaDirectory);
-  const classpath = [jarPath, readFileSync(classpathFile, 'utf8').trim()].join(path.delimiter);
-  const source = path.join(temporary, 'ArtifactSmoke.java');
-  writeFileSync(source, `
+  const classpathFile = path.join(temporary, "classpath.txt");
+  run(
+    "mvn",
+    [
+      "--batch-mode",
+      "--no-transfer-progress",
+      "dependency:build-classpath",
+      "-DincludeScope=runtime",
+      `-Dmdep.outputFile=${classpathFile}`,
+    ],
+    javaDirectory,
+  );
+  const classpath = [jarPath, readFileSync(classpathFile, "utf8").trim()].join(path.delimiter);
+  const source = path.join(temporary, "ArtifactSmoke.java");
+  writeFileSync(
+    source,
+    `
 import ai.ateve.AteveClient;
 import ai.ateve.models.SearchRequest;
 public final class ArtifactSmoke {
@@ -103,28 +147,53 @@ public final class ArtifactSmoke {
         if (!client.searchAsync(request).get().id().equals(args[1])) throw new AssertionError("async response");
     }
 }
-`);
-  run(executable('javac'), ['--release', '11', '-cp', classpath, '-d', temporary, source], temporary);
+`,
+  );
+  run(
+    executable("javac"),
+    ["--release", "11", "-cp", classpath, "-d", temporary, source],
+    temporary,
+  );
   let hits = 0;
   const server = createServer((request, response) => {
     hits++;
-    assert.equal(request.url, '/v1/search');
-    response.writeHead(200, { 'Content-Type': 'application/json' });
+    assert.equal(request.url, "/v1/search");
+    response.writeHead(200, { "Content-Type": "application/json" });
     response.end(JSON.stringify(fixture));
   });
   await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', resolve);
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
   });
   try {
     const address = server.address();
-    assert.ok(address && typeof address === 'object');
+    assert.ok(address && typeof address === "object");
     await new Promise<void>((resolve, reject) => {
-      const child = spawn(executable('java'), ['-cp', [temporary, classpath].join(path.delimiter), 'ArtifactSmoke', `http://127.0.0.1:${address.port}`, fixture.id], { stdio: 'inherit' });
-      child.on('error', reject);
-      child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`Java artifact smoke exited ${code}`)));
+      const child = spawn(
+        executable("java"),
+        [
+          "-cp",
+          [temporary, classpath].join(path.delimiter),
+          "ArtifactSmoke",
+          `http://127.0.0.1:${address.port}`,
+          fixture.id,
+        ],
+        { stdio: "inherit" },
+      );
+      child.on("error", reject);
+      child.on("exit", (code) =>
+        code === 0 ? resolve() : reject(new Error(`Java artifact smoke exited ${code}`)),
+      );
     });
     assert.equal(hits, 2);
-  } finally { await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())); }
-  console.log('npm ESM/CJS, Python wheel/sdist, and Java JAR verified; packaged sync/async clients work.');
-} finally { rmSync(temporary, { recursive: true, force: true }); }
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+  console.log(
+    "npm ESM/CJS, Python wheel/sdist, and Java JAR verified; packaged sync/async clients work.",
+  );
+} finally {
+  rmSync(temporary, { recursive: true, force: true });
+}
