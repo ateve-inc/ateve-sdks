@@ -22,6 +22,7 @@ from ateve import (
     ServerError,
     TextOptions,
     UserLocation,
+    __version__,
 )
 
 GOLDEN_RESPONSE = json.loads(
@@ -73,7 +74,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert payload["content"]["text"]["format"] == "markdown"
     assert "dateRange" not in payload
     assert captured[0].headers["Authorization"] == "Bearer sk_test"
-    assert captured[0].headers["User-Agent"] == "ateve-python/0.1.0"
+    assert captured[0].headers["User-Agent"] == f"ateve-python/{__version__}"
     assert response.id == "req_01J9ZK3V6XQ8"
     assert response.results[0].published_at is not None
     assert response.query.original == "climate policy analysis"

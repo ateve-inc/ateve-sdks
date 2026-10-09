@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { createServer } from "node:http";
 import path from "node:path";
 import { root } from "./generator.ts";
+import { checkVersions, pythonVersion } from "./versioning.ts";
 
 interface PackagedSDK {
   default: new (options: {
@@ -32,10 +33,12 @@ const fixture: { id: string } = JSON.parse(
   readFileSync(path.join(root, "packages/contract/fixtures/golden-response.json"), "utf8"),
 );
 try {
+  const version = checkVersions(root);
+  const pythonPackageVersion = pythonVersion(version);
   const packDirectory = path.resolve(process.argv[2] ?? temporary);
   if (!process.argv[2])
     run("pnpm", ["--filter", "@ateve/js", "pack", "--pack-destination", temporary]);
-  const tgz = readdirSync(packDirectory).find((file) => /^ateve-.*\.tgz$/.test(file));
+  const tgz = readdirSync(packDirectory).find((file) => file === `ateve-${version}.tgz`);
   assert.ok(tgz, "npm package was not produced");
   const npmArchive = path.join(packDirectory, tgz);
   const content = run("tar", ["-tzf", npmArchive]);
@@ -64,6 +67,7 @@ try {
       apiKey: "sk_test",
       fetch: async (_input, init) => {
         hits++;
+        assert.equal(new Headers(init?.headers).get("User-Agent"), `ateve-js/${version}`);
         assert.deepEqual(JSON.parse(String(init?.body)), {
           query: "artifact smoke test",
           max_results: 2,
@@ -87,8 +91,12 @@ try {
     process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
   );
   const pythonDist = path.join(root, "packages/python/dist");
-  const wheel = readdirSync(pythonDist).find((file) => file.endsWith(".whl"));
-  const sdist = readdirSync(pythonDist).find((file) => file.endsWith(".tar.gz"));
+  const wheel = readdirSync(pythonDist).find(
+    (file) => file.startsWith(`ateve-${pythonPackageVersion}-`) && file.endsWith(".whl"),
+  );
+  const sdist = readdirSync(pythonDist).find(
+    (file) => file === `ateve-${pythonPackageVersion}.tar.gz`,
+  );
   assert.ok(wheel && sdist, "Python wheel/sdist were not produced");
   run(
     python,
@@ -106,12 +114,14 @@ with tarfile.open(sys.argv[2]) as archive:
     assert any(name.endswith('/src/ateve/models.py') for name in archive.getnames())
 import ateve, httpx
 assert '.whl/' in ateve.__file__, ateve.__file__
+assert ateve.__version__ == sys.argv[4], ateve.__version__
 for name in ['AnswerBlock', 'Citation', 'Usage', 'UsageBreakdown', 'VideoItem']:
     assert not hasattr(ateve, name), name
 body = json.loads(sys.argv[3])
 hits = []
 def handler(request):
     hits.append(request)
+    assert request.headers['User-Agent'] == f'ateve-python/{sys.argv[4]}'
     assert json.loads(request.content) == {
         'query': 'artifact smoke test', 'max_results': 2,
         'content': {'snippet': True, 'text': {'max_characters': 100, 'format': 'text'}},
@@ -132,13 +142,14 @@ assert len(hits) == 2
       path.join(pythonDist, wheel),
       path.join(pythonDist, sdist),
       JSON.stringify(fixture),
+      pythonPackageVersion,
     ],
     temporary,
   );
 
   const javaDirectory = path.join(root, "packages/java");
   const jar = readdirSync(path.join(javaDirectory, "target")).find(
-    (file) => /^ateve-java-.*\.jar$/.test(file) && !/-sources|-javadoc/.test(file),
+    (file) => file === `ateve-java-${version}.jar`,
   );
   assert.ok(jar, "Java JAR was not produced");
   const javaHome = process.env.JAVA_HOME;
@@ -192,6 +203,7 @@ public final class ArtifactSmoke {
   let hits = 0;
   const server = createServer((request, response) => {
     hits++;
+    assert.equal(request.headers["user-agent"], `ateve-java/${version}`);
     assert.equal(request.url, "/v1/search");
     const chunks: Buffer[] = [];
     request.on("data", (chunk: Buffer) => chunks.push(chunk));

@@ -2,6 +2,11 @@ name: Publish JavaScript SDK
 
 on:
   workflow_call:
+    inputs:
+      dist_tag:
+        description: npm distribution tag selected from the checked release version
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -24,4 +29,6 @@ jobs:
           name: npm-sdk
           path: /tmp/ateve-release
       - name: Publish the verified tarball with npm OIDC
-        run: npm publish /tmp/ateve-release/ateve-*.tgz --access public --provenance
+        env:
+          NPM_DIST_TAG: ${{ inputs.dist_tag }}
+        run: npm publish /tmp/ateve-release/ateve-*.tgz --access public --provenance --tag "$NPM_DIST_TAG"

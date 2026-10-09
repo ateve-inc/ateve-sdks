@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { resolveReleaseTag } from "../src/release.ts";
@@ -38,9 +38,27 @@ test("release resolution requires a tag and pins its peeled commit", (t) => {
     "Annotated",
   );
   git("branch", "v0.3.0");
+  git("tag", "v0.2.0-beta.1");
 
   assert.equal(resolveReleaseTag("v0.1.0", cwd, commit), commit);
   assert.equal(resolveReleaseTag("v0.2.0", cwd), commit);
+  assert.equal(resolveReleaseTag("v0.2.0-beta.1", cwd), commit);
+  const output = path.join(cwd, "release-output");
+  const resolved = spawnSync(process.execPath, [path.join(root, "tools/codegen/src/release.ts")], {
+    cwd,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      RELEASE_TAG: "v0.2.0-beta.1",
+      RELEASE_COMMIT: commit,
+      GITHUB_OUTPUT: output,
+    },
+  });
+  assert.equal(resolved.status, 0, resolved.stderr);
+  assert.equal(
+    readFileSync(output, "utf8"),
+    `ref=${commit}\nrelease_tag=v0.2.0-beta.1\ndist_tag=beta\n`,
+  );
   for (const tag of ["", "main", commit, "v0.3.0", "v0.4.0", "v0.1.0\nref=main", "v../main"])
     assert.throws(() => resolveReleaseTag(tag, cwd));
 

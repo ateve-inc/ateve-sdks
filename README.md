@@ -50,6 +50,7 @@ the build backend version recorded in `uv.lock`.
 | `pnpm generate:check`               | Read-only comparison of models and contract                      |
 | `pnpm locks:check`                  | Verify uv workspace metadata matches its lockfile                |
 | `pnpm versions:check`               | Check package/client/contract versions and release tags          |
+| `pnpm version:bump`                 | Bump all SDK versions and add a changelog draft                  |
 | `pnpm format` / `pnpm format:check` | Write / check formatting with oxfmt                              |
 | `pnpm lint` / `pnpm typecheck`      | Contract, tooling and language checks                            |
 | `pnpm test`                         | SDK regression and generator tests, always executed              |
@@ -104,9 +105,38 @@ modified tracked files. Verify packaged code locally after `pnpm build`:
 node tools/codegen/src/check-artifacts.ts
 ```
 
-All SDKs share versions and `v*` tags. Update all package/client versions and
-contract `info.version` together; `pnpm versions:check` checks consistency and
-release tags.
+All SDKs share release versions and `v*` tags. Use the root command to update
+SDK manifests, private workspace manifests, client constants, contract
+`info.version`, Java's installation example and the local package version in
+`uv.lock` together, then fill in the draft added to [CHANGELOG.md](CHANGELOG.md):
+
+```bash
+pnpm version:bump                 # 0.1.0 -> 0.1.1 (default patch)
+pnpm version:bump --minor         # 0.1.0 -> 0.2.0
+pnpm version:bump --major         # 0.1.0 -> 1.0.0
+pnpm version:bump --1.2.3          # explicit higher version
+pnpm version:bump --minor --alpha # 0.1.0 -> 0.2.0-alpha.1
+pnpm version:bump --tag beta      # alias of --beta
+pnpm version:bump --rc            # alias of --tag rc
+pnpm version:bump --1.2.3-rc.2     # explicit prerelease and sequence
+```
+
+Examples start independently from `0.1.0`. On a prerelease, repeating its tag
+increments the sequence (`0.2.0-beta.1` → `0.2.0-beta.2`); moving to a later tag
+keeps the release base and starts at 1 (`alpha` → `beta` → `rc`). With no options,
+a prerelease becomes its stable release (`0.2.0-rc.1` → `0.2.0`). An explicit
+`--patch`, `--minor` or `--major` always increments that component and resets
+lower components. A target must be greater than the current version; conflicting
+options, version drift and duplicate changelog entries fail before any writes.
+Dependency versions and lockfile resolutions are preserved. The command edits
+files only; it does not commit, create Git tags or publish packages.
+
+JS, Java and Git tags use `0.2.0-alpha.1`, `0.2.0-beta.1`, `0.2.0-rc.1`.
+Python manifests, client constants and lock metadata use the equivalent
+`0.2.0a1`, `0.2.0b1`, `0.2.0rc1`, following
+[Python version normalization](https://packaging.python.org/en/latest/specifications/version-specifiers/).
+`pnpm versions:check` validates this mapping and checks the selected release tag.
+Run `pnpm check` before committing the version change and filled release notes.
 
 [Release SDKs](.github/workflows/release-python.yml) is the single release
 entry point. Its existing filename and `pypi` environment preserve the PyPI
@@ -146,6 +176,8 @@ For npm trusted publishing, configure package **ateve** with:
 The publishing job uses Node 24, npm 11.5.1 and `id-token: write`, with no npm
 write token. npm validates the caller filename when a reusable workflow publishes;
 see [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+Prereleases publish under the matching `alpha`, `beta` or `rc` npm dist-tag;
+stable releases use `latest`, as described in [npm dist-tags](https://docs.npmjs.com/adding-dist-tags-to-packages/).
 If a publisher was configured for `release-js.yml`, replace it with the caller
 configuration before publishing. Create the configuration near the first publish:
 an unvalidated new publisher expires after two days.

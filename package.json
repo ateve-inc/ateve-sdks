@@ -6,6 +6,7 @@
     "generate": "node tools/codegen/src/turbo.ts run generate",
     "generate:check": "node tools/codegen/src/turbo.ts run generate:check",
     "versions:check": "node tools/codegen/src/versions.ts",
+    "version:bump": "node tools/codegen/src/version-bump.ts",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "node tools/codegen/src/turbo.ts run lint",

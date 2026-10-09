@@ -62,3 +62,10 @@ that commit to CI and Java publishing; npm/Python consume CI artifacts. Version
 validation continues to use `src/versions.ts` with `GITHUB_REF_TYPE=tag` and
 `GITHUB_REF_NAME` for automatic releases and manual retries. See the root
 [release instructions](../../README.md#validation-and-release) for OIDC setup.
+
+`src/versioning.ts` defines the shared version targets and maps SemVer
+prereleases to Python's canonical spelling. `src/version-bump.ts`, exposed as
+`pnpm version:bump`, validates all current versions and arguments before editing
+those targets and adding a changelog draft. It updates only the local package's
+version in `uv.lock`; dependency resolutions stay unchanged. The existing
+`src/versions.ts` check and release dist-tag selection share these rules.

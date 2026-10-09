@@ -6,6 +6,7 @@ import Ateve, {
   PaymentRequiredError,
   RateLimitError,
   ServerError,
+  VERSION,
   type Fetch,
 } from "../src";
 
@@ -49,7 +50,7 @@ describe("Ateve JavaScript SDK", () => {
     expect(wire).not.toHaveProperty("topic");
     expect(wire).not.toHaveProperty("dateRange");
     expect(new Headers(capturedInit?.headers).get("Authorization")).toBe("Bearer sk_test");
-    expect(new Headers(capturedInit?.headers).get("User-Agent")).toBe("ateve-js/0.1.0");
+    expect(new Headers(capturedInit?.headers).get("User-Agent")).toBe(`ateve-js/${VERSION}`);
     expect(capturedInit?.redirect).toBe("manual");
     expect(response.latencyMs).toBe(412);
     expect(response.results[0]?.displayUrl).toBe("https://reuters.com/article/abc");
