@@ -1,0 +1,40 @@
+{
+  "id": "req_live_no_snippet_response",
+  "created": 1791529312,
+  "latency_ms": 11,
+  "query": {
+    "original": "Python programming language"
+  },
+  "results": [
+    {
+      "id": "results.#0",
+      "title": "pyOffice download for Linux",
+      "url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "display_url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "published_at": "2026-08-14T21:08:12.000Z",
+      "score": 0.8097166302,
+      "images": [
+        {
+          "url": "https://gtranslate.net/flags/blank.png",
+          "width": 32,
+          "height": 32,
+          "alt": "English"
+        },
+        {
+          "url": "https://www.onworks.net/images/onworkslogofavicon.ico",
+          "width": 1,
+          "height": 1,
+          "alt": "OnWorks favicon"
+        },
+        {
+          "url": "https://www.onworks.net/imagescropped/defaulticon.png_3.webp",
+          "width": 50,
+          "height": 50,
+          "alt": "Free download pyOffice Linux app to run online in Ubuntu online, Fedora online or Debian online"
+        }
+      ],
+      "is_safe": true
+    }
+  ],
+  "total_estimated_matches": 1
+}

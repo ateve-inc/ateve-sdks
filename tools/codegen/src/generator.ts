@@ -46,6 +46,7 @@ const keywords = new Set([
   "enum",
   "format",
   "description",
+  "default",
   "minimum",
   "maximum",
   "minLength",
@@ -67,11 +68,28 @@ export function validate(api: Contract, bindings: Bindings): void {
     for (const key of Object.keys(schema)) {
       if (!keywords.has(key)) throw new Error(`Unsupported keyword ${key} at ${location}`);
     }
+    if (schema.default !== undefined) {
+      const target = schema.$ref ? schemas[schema.$ref.split("/").at(-1)!] : schema;
+      const value = schema.default;
+      const type = target && typeOf(target);
+      if (
+        !target ||
+        !["string", "integer", "number", "boolean"].includes(type!) ||
+        typeof value !== (type === "integer" ? "number" : type) ||
+        (type === "integer" && !Number.isInteger(value)) ||
+        (target.enum && !target.enum.includes(String(value))) ||
+        (typeof value === "number" &&
+          (!Number.isFinite(value) ||
+            (target.minimum !== undefined && value < target.minimum) ||
+            (target.maximum !== undefined && value > target.maximum)))
+      )
+        throw new Error(`Invalid default at ${location}`);
+    }
     if (schema.$ref) {
       const name = schema.$ref.replace("#/components/schemas/", "");
       if (schema.$ref !== `#/components/schemas/${name}` || !schemas[name])
         throw new Error(`Unresolved reference ${schema.$ref}`);
-      if (Object.keys(schema).some((key) => !["$ref", "description"].includes(key)))
+      if (Object.keys(schema).some((key) => !["$ref", "description", "default"].includes(key)))
         throw new Error(`Unsupported reference siblings at ${location}`);
       return;
     }
@@ -209,7 +227,14 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
   validate(api, bindings);
   const output: GeneratedModels = { js: {}, python: {}, java: {} };
   const tsModels: string[] = [];
-  const pyModels = [template("python/preamble.tpl", {})];
+  const propertyTypes = Object.entries(api.components.schemas)
+    .filter(([name]) => bindings.models?.[name]?.generate !== false)
+    .flatMap(([, schema]) => Object.values(schema.properties ?? {}).map(pyType));
+  const typingImports = ["Any", "Dict", "List", "Optional"].filter(
+    (name) =>
+      name === "Optional" || propertyTypes.some((type) => new RegExp(`\\b${name}\\b`).test(type)),
+  );
+  const pyModels = [template("python/preamble.tpl", { typingImports: typingImports.join(", ") })];
   for (const [name, schema] of Object.entries(api.components.schemas)) {
     if (bindings.models?.[name]?.generate === false) continue;
     if (schema.enum) {
@@ -239,9 +264,13 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
         name,
         fields: entries
           .map(([field, prop]) => {
-            const comment = prop.description
-              ? `  /** ${prop.description.replaceAll("*/", "* /")} */\n`
-              : "";
+            const description = [
+              prop.description,
+              prop.default !== undefined ? `@default ${JSON.stringify(prop.default)}` : undefined,
+            ]
+              .filter(Boolean)
+              .join(" ");
+            const comment = description ? `  /** ${description.replaceAll("*/", "* /")} */\n` : "";
             return (
               comment +
               `  ${camel(field)}${schema.required?.includes(field) ? "" : "?"}: ${tsType(prop)};`
@@ -264,7 +293,19 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
               const type = nullable && !factory ? `Optional[${pyType(prop)}]` : pyType(prop);
               const args: string[] = [];
               if (factory) args.push(`default_factory=${factory}`);
-              else if (!required) args.push("default=None");
+              else if (!required) {
+                const defaultValue =
+                  prop.default === undefined
+                    ? "None"
+                    : prop.$ref
+                      ? `${pyType(prop)}.${String(prop.default).toUpperCase()}`
+                      : typeof prop.default === "boolean"
+                        ? prop.default
+                          ? "True"
+                          : "False"
+                        : JSON.stringify(prop.default);
+                args.push(`default=${defaultValue}`);
+              }
               if (schema["x-sdk-kind"] === "request") {
                 for (const [keyword, argument] of Object.entries({
                   minimum: "ge",
@@ -330,7 +371,11 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
           ? `${sdkField} == null ? null : Collections.unmodifiable${collection}(${sdkField})`
           : sdkField;
       accessors.push(`    public ${type} ${sdkField}() { return ${getter}; }`);
-      builderFields.push(`        private ${type} ${sdkField};`);
+      const defaultValue =
+        prop.default === undefined
+          ? ""
+          : ` = ${prop.$ref ? `${type}.${String(prop.default).toUpperCase()}` : JSON.stringify(prop.default) + (type === "Long" ? "L" : type === "Double" ? "d" : "")}`;
+      builderFields.push(`        private ${type} ${sdkField}${defaultValue};`);
       // Preserve existing parameter names on domain-list builder methods.
       const parameter = ["include_domains", "exclude_domains"].includes(field)
         ? "domains"

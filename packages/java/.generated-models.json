@@ -1,6 +1,4 @@
 [
-  "src/main/java/ai/ateve/models/AnswerBlock.java",
-  "src/main/java/ai/ateve/models/Citation.java",
   "src/main/java/ai/ateve/models/ContentFormat.java",
   "src/main/java/ai/ateve/models/ContentOptions.java",
   "src/main/java/ai/ateve/models/ImageItem.java",
@@ -9,8 +7,6 @@
   "src/main/java/ai/ateve/models/SearchRequest.java",
   "src/main/java/ai/ateve/models/SearchResponse.java",
   "src/main/java/ai/ateve/models/SearchResult.java",
-  "src/main/java/ai/ateve/models/Usage.java",
-  "src/main/java/ai/ateve/models/UsageBreakdown.java",
-  "src/main/java/ai/ateve/models/UserLocation.java",
-  "src/main/java/ai/ateve/models/VideoItem.java"
+  "src/main/java/ai/ateve/models/TextOptions.java",
+  "src/main/java/ai/ateve/models/UserLocation.java"
 ]

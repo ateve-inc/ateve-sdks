@@ -18,10 +18,11 @@ const client = new Ateve(); // reads ATEVE_API_KEY
 const response = await client.search({
   query: "quantum computing",
   dateRange: "week",
-  content: { summary: true, highlights: true },
+  maxResults: 10,
+  content: { text: { format: "markdown", maxCharacters: 8000 } },
 });
 
-console.log(response.results[0]?.title, response.usage?.credits);
+console.log(response.results[0]?.title, response.results[0]?.text);
 ```
 
 The client uses native `fetch`, sends camelCase SDK options as snake_case JSON,
@@ -46,4 +47,18 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 
 ## Search contract limits
 
-Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `content: { rawContent: true, maxCharacters: 8000 }`. The limit is a positive signed 32-bit integer with no fixed business cap.
+Use `maxResults` (1–100, default 10); `limit` and `offset` have been removed.
+`content.snippet` is optional and defaults to `true`. To retrieve full text,
+pass `content: { text: {} }`, or configure
+`content: { text: { maxCharacters: 8000, format: "markdown" } }`.
+`format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
+request full text. `maxCharacters` remains a positive signed 32-bit integer;
+its server default is 5000 per result, applied after format conversion.
+`content.summary` and `content.highlights` have been removed; `favicon`
+remains optional under `content`.
+
+Both formats return content in `results[].text`. It is omitted when text is
+not requested and `null` when extraction fails. Snippets may coexist with text;
+set `content.snippet: false` to omit them. Responses contain `query.original`,
+`results` and request metadata; answer, usage, news/video, query tuning and
+raw content/summary/highlights response models have been removed.

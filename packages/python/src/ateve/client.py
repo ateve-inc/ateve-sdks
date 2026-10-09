@@ -80,8 +80,7 @@ def _timeout(timeout: float, connect_timeout: float) -> httpx.Timeout:
 def _request_from_args(
     query: Union[str, SearchRequest],
     *,
-    limit: Optional[int],
-    offset: Optional[int],
+    max_results: Optional[int],
     date_range: Optional[str],
     locale: Optional[LocaleSettings],
     include_domains: Optional[list[str]],
@@ -90,8 +89,7 @@ def _request_from_args(
     safe_search: Optional[bool],
 ) -> SearchRequest:
     options = (
-        limit,
-        offset,
+        max_results,
         date_range,
         locale,
         include_domains,
@@ -105,8 +103,7 @@ def _request_from_args(
         return query
     return SearchRequest(
         query=query,
-        limit=limit,
-        offset=offset,
+        **({"max_results": max_results} if max_results is not None else {}),
         date_range=date_range,
         locale=locale,
         include_domains=include_domains,
@@ -307,8 +304,7 @@ class Ateve(_BaseAteve):
         self,
         query: Union[str, SearchRequest],
         *,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        max_results: Optional[int] = None,
         date_range: Optional[str] = None,
         locale: Optional[LocaleSettings] = None,
         include_domains: Optional[list[str]] = None,
@@ -320,8 +316,7 @@ class Ateve(_BaseAteve):
         self._ensure_open()
         request = _request_from_args(
             query,
-            limit=limit,
-            offset=offset,
+            max_results=max_results,
             date_range=date_range,
             locale=locale,
             include_domains=include_domains,
@@ -424,8 +419,7 @@ class AsyncAteve(_BaseAteve):
         self,
         query: Union[str, SearchRequest],
         *,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        max_results: Optional[int] = None,
         date_range: Optional[str] = None,
         locale: Optional[LocaleSettings] = None,
         include_domains: Optional[list[str]] = None,
@@ -437,8 +431,7 @@ class AsyncAteve(_BaseAteve):
         self._ensure_open()
         request = _request_from_args(
             query,
-            limit=limit,
-            offset=offset,
+            max_results=max_results,
             date_range=date_range,
             locale=locale,
             include_domains=include_domains,

@@ -9,8 +9,15 @@ import path from "node:path";
 import { root } from "./generator.ts";
 
 interface PackagedSDK {
-  default: new (options: { apiKey: string; fetch: () => Promise<Response> }) => {
-    search(request: { query: string }): Promise<{ id: string }>;
+  default: new (options: {
+    apiKey: string;
+    fetch: (input: unknown, init?: RequestInit) => Promise<Response>;
+  }) => {
+    search(request: {
+      query: string;
+      maxResults?: number;
+      content?: { text?: { maxCharacters?: number } };
+    }): Promise<{ id: string }>;
   };
 }
 
@@ -31,11 +38,14 @@ try {
   const tgz = readdirSync(packDirectory).find((file) => /^ateve-.*\.tgz$/.test(file));
   assert.ok(tgz, "npm package was not produced");
   const npmArchive = path.join(packDirectory, tgz);
-  const contents = run("tar", ["-tzf", npmArchive]);
-  assert.match(contents, /package\/dist\/index.d.ts/);
-  assert.doesNotMatch(contents, /package\/(?:src|test|contract|tools)\//);
+  const content = run("tar", ["-tzf", npmArchive]);
+  assert.match(content, /package\/dist\/index.d.ts/);
+  assert.doesNotMatch(content, /package\/(?:src|test|contract|tools)\//);
   run("tar", ["-xzf", npmArchive, "-C", temporary]);
   const packagePath = path.join(temporary, "package");
+  const declarations = readFileSync(path.join(packagePath, "dist/index.d.ts"), "utf8");
+  assert.match(declarations, /text\?: string \| null/);
+  assert.doesNotMatch(declarations, /AnswerBlock|Citation|UsageBreakdown|VideoItem/);
   const npmManifest: { name: string; version: string } = JSON.parse(
     readFileSync(path.join(packagePath, "package.json"), "utf8"),
   );
@@ -52,12 +62,21 @@ try {
     let hits = 0;
     const client = new sdk.default({
       apiKey: "sk_test",
-      fetch: async () => {
+      fetch: async (_input, init) => {
         hits++;
+        assert.deepEqual(JSON.parse(String(init?.body)), {
+          query: "artifact smoke test",
+          max_results: 2,
+          content: { snippet: true, text: { max_characters: 100, format: "text" } },
+        });
         return new Response(JSON.stringify(fixture));
       },
     });
-    const response = await client.search({ query: "artifact smoke test" });
+    const response = await client.search({
+      query: "artifact smoke test",
+      maxResults: 2,
+      content: { text: { maxCharacters: 100 } },
+    });
     assert.equal(response.id, fixture.id);
     assert.equal(hits, 1);
   }
@@ -87,18 +106,26 @@ with tarfile.open(sys.argv[2]) as archive:
     assert any(name.endswith('/src/ateve/models.py') for name in archive.getnames())
 import ateve, httpx
 assert '.whl/' in ateve.__file__, ateve.__file__
+for name in ['AnswerBlock', 'Citation', 'Usage', 'UsageBreakdown', 'VideoItem']:
+    assert not hasattr(ateve, name), name
 body = json.loads(sys.argv[3])
 hits = []
 def handler(request):
     hits.append(request)
+    assert json.loads(request.content) == {
+        'query': 'artifact smoke test', 'max_results': 2,
+        'content': {'snippet': True, 'text': {'max_characters': 100, 'format': 'text'}},
+    }
     return httpx.Response(200, json=body)
 with httpx.Client(transport=httpx.MockTransport(handler)) as transport:
     with ateve.Ateve('sk_test', http_client=transport) as client:
-        assert client.search('artifact smoke test').id == body['id']
+        assert client.search('artifact smoke test', max_results=2,
+            content=ateve.ContentOptions(text=ateve.TextOptions(max_characters=100))).id == body['id']
 async def check_async():
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as transport:
         async with ateve.AsyncAteve('sk_test', http_client=transport) as client:
-            assert (await client.search('artifact smoke test')).id == body['id']
+            assert (await client.search('artifact smoke test', max_results=2,
+                content=ateve.ContentOptions(text=ateve.TextOptions(max_characters=100)))).id == body['id']
 asyncio.run(check_async())
 assert len(hits) == 2
 `,
@@ -119,6 +146,11 @@ assert len(hits) == 2
   const jarPath = path.join(javaDirectory, "target", jar);
   const jarContents = run(executable("jar"), ["tf", jarPath]);
   assert.match(jarContents, /ai\/ateve\/models\/SearchRequest.class/);
+  assert.match(jarContents, /ai\/ateve\/models\/TextOptions.class/);
+  assert.doesNotMatch(
+    jarContents,
+    /ai\/ateve\/models\/(?:AnswerBlock|Citation|Usage|UsageBreakdown|VideoItem)\.class/,
+  );
   assert.doesNotMatch(jarContents, /(?:MockApi|Fixtures|AteveClientTest)\.class/);
   const classpathFile = path.join(temporary, "classpath.txt");
   run(
@@ -139,10 +171,13 @@ assert len(hits) == 2
     `
 import ai.ateve.AteveClient;
 import ai.ateve.models.SearchRequest;
+import ai.ateve.models.ContentOptions;
+import ai.ateve.models.TextOptions;
 public final class ArtifactSmoke {
     public static void main(String[] args) throws Exception {
         AteveClient client = AteveClient.builder().apiKey("sk_test").baseUrl(args[0]).build();
-        SearchRequest request = SearchRequest.builder().query("artifact smoke test").build();
+        SearchRequest request = SearchRequest.builder().query("artifact smoke test").maxResults(2)
+            .content(ContentOptions.builder().text(TextOptions.builder().maxCharacters(100).build()).build()).build();
         if (!client.search(request).id().equals(args[1])) throw new AssertionError("sync response");
         if (!client.searchAsync(request).get().id().equals(args[1])) throw new AssertionError("async response");
     }
@@ -158,8 +193,17 @@ public final class ArtifactSmoke {
   const server = createServer((request, response) => {
     hits++;
     assert.equal(request.url, "/v1/search");
-    response.writeHead(200, { "Content-Type": "application/json" });
-    response.end(JSON.stringify(fixture));
+    const chunks: Buffer[] = [];
+    request.on("data", (chunk: Buffer) => chunks.push(chunk));
+    request.on("end", () => {
+      assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString("utf8")), {
+        query: "artifact smoke test",
+        max_results: 2,
+        content: { snippet: true, text: { max_characters: 100, format: "text" } },
+      });
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify(fixture));
+    });
   });
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

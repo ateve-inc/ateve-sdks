@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 final class ModelCompatibilityTest {
     @Test
     void missingAndNullFieldsRemainNullableAndUnknownFieldsAreIgnored() {
-        SearchResult result = read("{\"summary\":null,\"published_at\":null,\"future_field\":true}", SearchResult.class);
-        assertNull(result.summary());
+        SearchResult result = read("{\"text\":null,\"published_at\":null,\"future_field\":true}", SearchResult.class);
+        assertNull(result.text());
         assertNull(result.publishedAt());
         assertNull(result.images());
         ImageItem image = read("{\"url\":\"https://example.com/image.png\"}", ImageItem.class);

@@ -11,6 +11,7 @@ export interface Schema {
   enum?: string[];
   format?: string;
   description?: string;
+  default?: string | number | boolean;
   minimum?: number;
   maximum?: number;
   minLength?: number;

@@ -69,9 +69,9 @@ describe("ofetch transport policy", () => {
         JSON.parse(String(init?.body)),
       ]),
     ).toEqual([
-      ["https://api.test/proxy/v1/search", "Bearer first", { query: "one" }],
-      ["https://other.test/v1/search", "Bearer second", { query: "two" }],
-      ["https://api.test/proxy/v1/search", "Bearer first", { query: "three" }],
+      ["https://api.test/proxy/v1/search", "Bearer first", { query: "one", max_results: 10 }],
+      ["https://other.test/v1/search", "Bearer second", { query: "two", max_results: 10 }],
+      ["https://api.test/proxy/v1/search", "Bearer first", { query: "three", max_results: 10 }],
     ]);
   });
 

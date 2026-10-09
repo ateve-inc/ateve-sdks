@@ -164,11 +164,19 @@ mvn -Prelease verify  # also builds sources.jar and javadoc.jar
 
 ## Search contract limits
 
-Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `ContentOptions.builder().rawContent(true).maxCharacters(8000).build()`. The limit is a positive signed 32-bit integer with no fixed business cap.
+Use `SearchRequest.builder().maxResults(...)` (1–100, default 10); `limit`
+and `offset` have been removed. `ContentOptions.snippet` is optional and
+its builder defaults to `true`. To retrieve full text, pass
+`content(ContentOptions.builder().text(TextOptions.builder().build()).build())`,
+or configure `TextOptions.builder().maxCharacters(8000).format(ContentFormat.MARKDOWN).build()`.
+`format` accepts `ContentFormat.TEXT` (default) or `ContentFormat.MARKDOWN`.
+Omitting `text` does not request full text. `maxCharacters` remains a positive
+signed 32-bit integer; its server default is 5000 per result, applied after
+format conversion. `summary` and `highlights` have been removed from
+`ContentOptions`; `favicon` remains optional under `content`.
 
-## Repository development
-
-See the [root development guide](../../README.md) for workspace setup and
-checks. API models are generated from the [compatibility contract](../contract/).
-Run `pnpm generate` from the repository root after changing models; do not
-edit files marked as generated. Published packages include the models.
+Both formats return content through `SearchResult.text()`, which is `null`
+when absent or extraction fails. Snippets may coexist with text; use
+`ContentOptions.builder().snippet(false)` to omit them. Obsolete answer, usage,
+news/video, query tuning and raw content/summary/highlights response fields
+and models have been removed.

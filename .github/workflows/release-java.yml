@@ -1,32 +1,35 @@
-name: Release Java SDK
+name: Publish Java SDK
 
 on:
-  push:
-    tags: ["v*"]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Release commit that passed the shared CI checks
+        required: true
+        type: string
+    secrets:
+      CENTRAL_USERNAME:
+        required: true
+      CENTRAL_PASSWORD:
+        required: true
+      GPG_PRIVATE_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
 
 permissions:
   contents: read
 
 jobs:
-  checks:
-    uses: ./.github/workflows/ci.yml
   publish:
-    needs: checks
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: packages/java
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile && pnpm versions:check && pnpm generate:check
-        working-directory: .
-
+          ref: ${{ inputs.ref }}
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -36,16 +39,14 @@ jobs:
           server-id: central
           server-username: CENTRAL_USERNAME
           server-password: CENTRAL_PASSWORD
-
       - name: Import GPG key
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --import
-
-      - name: Publish to Maven Central
+      - name: Build, sign and publish to Maven Central
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: mvn --batch-mode --no-transfer-progress -Prelease deploy
+        run: mvn --batch-mode --no-transfer-progress -DskipTests -Prelease deploy

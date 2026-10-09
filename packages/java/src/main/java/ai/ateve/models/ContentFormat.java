@@ -3,7 +3,7 @@ package ai.ateve.models;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/** Format of raw_content in results. */
+/** Format of text in search results. */
 public enum ContentFormat {
     TEXT("text"),
     MARKDOWN("markdown");

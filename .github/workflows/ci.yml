@@ -5,6 +5,15 @@ on:
   push:
     branches: [main, master]
   workflow_call:
+    inputs:
+      ref:
+        description: Resolved release commit to check
+        type: string
+        default: ""
+      release_tag:
+        description: Release tag to validate and produce publishable artifacts for
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -12,6 +21,8 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,6 +35,8 @@ jobs:
             java: "17"
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v4
         with:
@@ -47,7 +60,12 @@ jobs:
       - run: pnpm bootstrap
         env:
           UV_PYTHON: ${{ matrix.python }}
-      - run: pnpm check
+      - name: Check SDKs and the selected release tag
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            export GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG"
+          fi
+          pnpm check
         env:
           UV_PYTHON: ${{ matrix.python }}
       - run: pnpm --filter @ateve/js pack --pack-destination /tmp/ateve-pack
@@ -55,3 +73,23 @@ jobs:
         run: node tools/codegen/src/check-artifacts.ts /tmp/ateve-pack
       - name: Verify checks did not modify tracked files
         run: git diff --exit-code
+      - name: Upload the verified npm tarball
+        if: inputs.release_tag != '' && matrix.java == '11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-sdk
+          path: /tmp/ateve-pack/ateve-*.tgz
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+      - name: Upload the verified Python distributions
+        if: inputs.release_tag != '' && matrix.java == '11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk
+          path: |
+            packages/python/dist/*.whl
+            packages/python/dist/*.tar.gz
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7

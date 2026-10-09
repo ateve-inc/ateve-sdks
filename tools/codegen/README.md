@@ -17,6 +17,10 @@ minimum/maximum, string length, array maximum length and patterns. Composition,
 inline models and unsupported keywords fail explicitly; extend the generator
 and tests before using them.
 
+Primitive and referenced string enum defaults are supported and validated
+against their types, enum values and numeric bounds. TS types document defaults;
+Python models and Java builders initialize them without making fields required.
+
 Python hooks retain the existing helpers/base classes and decorated validators.
 Java Builder hooks retain calendar, timezone and validation behavior; numeric
 limits and patterns are substituted from the contract. New fields are rendered
@@ -48,6 +52,13 @@ generator's exact output. Formatting scripts and templates never automatically
 regenerate models; run the read-only drift check after changing tooling.
 
 After the root build, run `node tools/codegen/src/check-artifacts.ts` from
-the root to verify npm ESM/CJS, Python wheel/sdist and Java JAR contents and
+the root to verify npm ESM/CJS, Python wheel/sdist and Java JAR content and
 run packaged-client smoke calls. It uses temporary files and a local HTTP
 server, never the production API.
+
+`src/release.ts` resolves an existing `v*` tag to its commit and rejects a tag
+that differs from the workflow's source commit. The release workflow passes
+that commit to CI and Java publishing; npm/Python consume CI artifacts. Version
+validation continues to use `src/versions.ts` with `GITHUB_REF_TYPE=tag` and
+`GITHUB_REF_NAME` for automatic releases and manual retries. See the root
+[release instructions](../../README.md#validation-and-release) for OIDC setup.

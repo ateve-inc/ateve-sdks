@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -81,20 +81,20 @@ class LocaleSettings(RequestModel):
     user_location: Optional[UserLocation] = None
 
 
-class ContentOptions(RequestModel):
-    snippet: Optional[bool] = None
-    raw_content: Optional[bool] = None
-    format: Optional[ContentFormat] = None
-    summary: Optional[bool] = None
-    highlights: Optional[bool] = None
+class TextOptions(RequestModel):
     max_characters: Optional[int] = Field(default=None, ge=1, le=2147483647, strict=True)
+    format: Optional[ContentFormat] = Field(default=ContentFormat.TEXT)
+
+
+class ContentOptions(RequestModel):
+    snippet: Optional[bool] = Field(default=True)
+    text: Optional[TextOptions] = None
     favicon: Optional[bool] = None
 
 
 class SearchRequest(RequestModel):
     query: str = Field(min_length=1, max_length=2000)
-    limit: Optional[int] = Field(default=None, ge=1, le=50)
-    offset: Optional[int] = Field(default=None, ge=0, le=99)
+    max_results: Optional[int] = Field(default=10, ge=1, le=100)
     date_range: Optional[str] = None
     locale: Optional[LocaleSettings] = None
     include_domains: Optional[List[str]] = Field(default=None, max_length=300)
@@ -132,30 +132,8 @@ class ImageItem(ResponseModel):
     alt: Optional[str] = None
 
 
-class VideoItem(ResponseModel):
-    url: Optional[str] = None
-    thumbnail: Optional[str] = None
-    title: Optional[str] = None
-    duration_seconds: Optional[int] = None
-
-
-class Citation(ResponseModel):
-    url: Optional[str] = None
-    title: Optional[str] = None
-    start_index: Optional[int] = None
-    end_index: Optional[int] = None
-    quote: Optional[str] = None
-
-
-class AnswerBlock(ResponseModel):
-    content: Optional[str] = None
-    citations: Optional[List[Citation]] = None
-
-
 class QueryInfo(ResponseModel):
     original: str
-    effective: Optional[str] = None
-    auto_tuned: Optional[Dict[str, Any]] = None
 
 
 class SearchResult(ResponseModel):
@@ -163,28 +141,13 @@ class SearchResult(ResponseModel):
     title: Optional[str] = None
     url: Optional[str] = None
     display_url: Optional[str] = None
-    site_name: Optional[str] = None
-    language: Optional[str] = None
     published_at: Optional[datetime] = None
     score: Optional[float] = None
     snippet: Optional[str] = None
-    raw_content: Optional[str] = None
-    summary: Optional[str] = None
-    highlights: Optional[List[str]] = None
+    text: Optional[str] = None
     favicon: Optional[str] = None
     images: List[ImageItem] = Field(default_factory=list)
     is_safe: Optional[bool] = None
-
-
-class UsageBreakdown(ResponseModel):
-    search: Optional[int] = None
-    rerank: Optional[int] = None
-    answer: Optional[int] = None
-
-
-class Usage(ResponseModel):
-    credits: Optional[int] = None
-    breakdown: Optional[UsageBreakdown] = None
 
 
 class SearchResponse(ResponseModel):
@@ -192,10 +155,5 @@ class SearchResponse(ResponseModel):
     created: int
     latency_ms: int
     query: QueryInfo
-    answer: Optional[AnswerBlock] = None
     results: List[SearchResult]
-    news: Optional[List[SearchResult]] = None
-    images: Optional[List[ImageItem]] = None
-    videos: Optional[List[VideoItem]] = None
     total_estimated_matches: Optional[int] = None
-    usage: Optional[Usage] = None

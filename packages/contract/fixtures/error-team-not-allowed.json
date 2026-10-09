@@ -1,0 +1,8 @@
+{
+  "id": "req_team_not_allowed",
+  "error": {
+    "code": "team_not_allowed",
+    "message": "This team is not currently allowed to use Search.",
+    "type": "invalid_request_error"
+  }
+}

@@ -1,8 +1,26 @@
-# SDK compatibility contract
+# SDK API contract
 
-`openapi.json` is an OpenAPI 3.1.0 document extracted from SDK 0.1.0 models,
-serializers, validators and tests. This local compatibility baseline does not
-describe the latest authoritative server API; alignment is a separate change.
+`openapi.json` is an OpenAPI 3.1.0 document. Request models reflect the October
+2026 update: `max_results` replaces `limit`/`offset`, and the API uses `content`
+(singular). `content.snippet` defaults to true. Full text is requested through
+the optional `content.text` object; its `format` defaults to `text`, and
+`max_characters` lives inside that object. Request summary/highlights options
+have been removed.
+
+Success response models were verified against live requests on October 9, 2026.
+The response contains `id`, `created`, `latency_ms`, `query.original`, `results`,
+and optional `total_estimated_matches`. Per-result extracted content is returned
+as `text` for both formats. Extraction failure produces `text: null`; without
+a text request, the field is omitted. Snippets may coexist with text and are
+omitted when `content.snippet` is false. The obsolete answer, usage, news/video,
+query tuning, raw_content, summary, highlights, site_name and language fields
+and unused nested models have been removed.
+
+The `live-*-response.json` fixtures capture these observed shapes with synthetic
+request IDs. A permission-error fixture records the observed `team_not_allowed`
+envelope. No API keys are stored. The local documentation repository currently
+describes a separate `markdown` response field and snippet replacement; live
+responses use `text` and preserve snippets, so this contract follows live behavior.
 This private workspace is not published and is not an SDK runtime dependency.
 
 ## Changing a model
@@ -20,6 +38,11 @@ Models are discovered from `components.schemas`. New Python models are
 automatically re-exported from `ateve`, TS interfaces from `ateve`, and Java
 classes from `ai.ateve.models`. Error schemas describe the existing protocol
 but do not generate replacements for handwritten exceptions.
+
+Primitive and referenced enum `default` values remain optional protocol fields.
+Python models and Java builders initialize these defaults. JavaScript applies
+the same defaults during serialization. Omitted `content` and `text` objects
+stay omitted, so default options do not enable full-text retrieval.
 
 ## Compatibility differences
 

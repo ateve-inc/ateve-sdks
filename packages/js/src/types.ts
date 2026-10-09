@@ -16,21 +16,24 @@ export interface LocaleSettings {
   userLocation?: UserLocation;
 }
 
-export interface ContentOptions {
-  snippet?: boolean;
-  rawContent?: boolean;
-  format?: ContentFormat;
-  summary?: boolean;
-  highlights?: boolean;
-  /** Per-result raw content character limit; server default 5000. */
+export interface TextOptions {
+  /** Per-result text character limit after format conversion; server default 5000. */
   maxCharacters?: number;
+  /** @default "text" */
+  format?: ContentFormat;
+}
+
+export interface ContentOptions {
+  /** @default true */
+  snippet?: boolean;
+  text?: TextOptions;
   favicon?: boolean;
 }
 
 export interface SearchRequest {
   query: string;
-  limit?: number;
-  offset?: number;
+  /** @default 10 */
+  maxResults?: number;
   /** day, week, month, year, YYYY-MM-DD, or open/closed YYYY-MM-DD..YYYY-MM-DD range; empty input retains current SDK behavior. */
   dateRange?: string;
   locale?: LocaleSettings;
@@ -47,30 +50,9 @@ export interface ImageItem {
   alt: string | null;
 }
 
-export interface VideoItem {
-  url?: string;
-  thumbnail?: string;
-  title?: string;
-  durationSeconds?: number;
-}
-
-export interface Citation {
-  url?: string;
-  title?: string;
-  startIndex?: number;
-  endIndex?: number;
-  quote?: string;
-}
-
-export interface AnswerBlock {
-  content?: string;
-  citations?: Citation[];
-}
-
 export interface QueryInfo {
+  /** The submitted search query. */
   original: string;
-  effective?: string;
-  autoTuned?: Record<string, unknown>;
 }
 
 export interface SearchResult {
@@ -78,28 +60,15 @@ export interface SearchResult {
   title?: string;
   url?: string;
   displayUrl?: string;
-  siteName?: string;
-  language?: string;
   publishedAt?: string | null;
   score?: number;
+  /** Excerpt returned by default, including alongside text; omitted when content.snippet is false. */
   snippet?: string;
-  rawContent?: string;
-  summary?: string | null;
-  highlights?: string[] | null;
+  /** Extracted content when content.text is requested, in the selected text or Markdown format. Null when extraction fails; omitted when text is not requested. */
+  text?: string | null;
   favicon?: string;
   images: ImageItem[];
   isSafe?: boolean | null;
-}
-
-export interface UsageBreakdown {
-  search?: number;
-  rerank?: number;
-  answer?: number;
-}
-
-export interface Usage {
-  credits?: number;
-  breakdown?: UsageBreakdown;
 }
 
 export interface SearchResponse {
@@ -107,13 +76,9 @@ export interface SearchResponse {
   created: number;
   latencyMs: number;
   query: QueryInfo;
-  answer?: AnswerBlock;
   results: SearchResult[];
-  news?: SearchResult[];
-  images?: ImageItem[];
-  videos?: VideoItem[];
+  /** Estimated matches returned by the server; observed to equal the result count in live probes. */
   totalEstimatedMatches?: number | null;
-  usage?: Usage;
 }
 
 export * from "./options";

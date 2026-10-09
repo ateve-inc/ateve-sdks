@@ -17,8 +17,7 @@ public final class SearchRequest {
     private static final Pattern OPEN_RIGHT = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2})\\.\\.$");
     private static final Pattern OPEN_LEFT = Pattern.compile("^\\.\\.(\\d{4}-\\d{2}-\\d{2})$");
     private final String query;
-    private final Integer limit;
-    private final Integer offset;
+    private final Integer maxResults;
     private final String dateRange;
     private final LocaleSettings locale;
     private final List<String> includeDomains;
@@ -28,8 +27,7 @@ public final class SearchRequest {
 
     private SearchRequest(Builder b) {
         this.query = b.query;
-        this.limit = b.limit;
-        this.offset = b.offset;
+        this.maxResults = b.maxResults;
         this.dateRange = b.dateRange;
         this.locale = b.locale;
         this.includeDomains = b.includeDomains == null ? null : List.copyOf(b.includeDomains);
@@ -41,8 +39,7 @@ public final class SearchRequest {
     public static Builder builder() { return new Builder(); }
 
     public String query() { return query; }
-    public Integer limit() { return limit; }
-    public Integer offset() { return offset; }
+    public Integer maxResults() { return maxResults; }
     public String dateRange() { return dateRange; }
     public LocaleSettings locale() { return locale; }
     public List<String> includeDomains() { return includeDomains; }
@@ -52,8 +49,7 @@ public final class SearchRequest {
 
     public static final class Builder {
         private String query;
-        private Integer limit;
-        private Integer offset;
+        private Integer maxResults = 10;
         private String dateRange;
         private LocaleSettings locale;
         private List<String> includeDomains;
@@ -62,8 +58,7 @@ public final class SearchRequest {
         private Boolean safeSearch;
 
         public Builder query(String query) { this.query = query; return this; }
-        public Builder limit(Integer limit) { this.limit = limit; return this; }
-        public Builder offset(Integer offset) { this.offset = offset; return this; }
+        public Builder maxResults(Integer maxResults) { this.maxResults = maxResults; return this; }
         public Builder dateRange(String dateRange) { this.dateRange = dateRange; return this; }
         public Builder locale(LocaleSettings locale) { this.locale = locale; return this; }
         public Builder includeDomains(List<String> domains) { this.includeDomains = domains; return this; }
@@ -78,8 +73,7 @@ public final class SearchRequest {
             if (query.length() > 2000) {
                 throw new IllegalArgumentException("query must not exceed 2000 characters");
             }
-            requireRange(limit, 1, 50, "limit");
-            requireRange(offset, 0, 99, "offset");
+            requireRange(maxResults, 1, 100, "maxResults");
             requireMaxSize(includeDomains, 300, "includeDomains");
             requireMaxSize(excludeDomains, 300, "excludeDomains");
             validateDateRange(dateRange);

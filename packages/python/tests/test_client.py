@@ -20,6 +20,7 @@ from ateve import (
     RateLimitError,
     SearchRequest,
     ServerError,
+    TextOptions,
     UserLocation,
 )
 
@@ -51,26 +52,32 @@ def test_sync_golden_contract_and_wire_names() -> None:
 
     response = client.search(
         "climate policy analysis",
-        limit=20,
+        max_results=20,
         date_range="2026-01-01..2026-06-30",
         locale=LocaleSettings(mkt="US", language="en"),
-        content=ContentOptions(format=ContentFormat.MARKDOWN, summary=True, max_characters=5000),
+        content=ContentOptions(
+            snippet=False, text=TextOptions(format=ContentFormat.MARKDOWN, max_characters=5000)
+        ),
         safe_search=False,
     )
 
     payload = json.loads(captured[0].content)
     assert payload["date_range"] == "2026-01-01..2026-06-30"
     assert payload["safe_search"] is False
-    assert payload["content"]["max_characters"] == 5000
+    assert payload["max_results"] == 20
+    assert payload["content"]["snippet"] is False
+    assert not {"limit", "offset", "contents"}.intersection(payload)
+    assert payload["content"]["text"]["max_characters"] == 5000
     assert "images" not in payload["content"]
     assert "topic" not in payload
-    assert payload["content"]["format"] == "markdown"
+    assert payload["content"]["text"]["format"] == "markdown"
     assert "dateRange" not in payload
     assert captured[0].headers["Authorization"] == "Bearer sk_test"
     assert captured[0].headers["User-Agent"] == "ateve-python/0.1.0"
     assert response.id == "req_01J9ZK3V6XQ8"
     assert response.results[0].published_at is not None
-    assert response.usage is not None and response.usage.credits == 3
+    assert response.query.original == "climate policy analysis"
+    assert response.total_estimated_matches == 128000
 
 
 def test_no_retry_and_structured_rate_limit_metadata() -> None:
@@ -256,11 +263,11 @@ def test_request_validation_and_endpoint_hardening() -> None:
     with pytest.raises(ValidationError):
         SearchRequest(query=" ")
     with pytest.raises(ValidationError):
-        SearchRequest(query="q", limit=0)
+        SearchRequest(query="q", max_results=0)
     with pytest.raises(ValidationError):
         SearchRequest(query="q", date_range="2026-02-31")
     with pytest.raises(ValidationError):
-        ContentOptions(max_characters=0)
+        TextOptions(max_characters=0)
     with pytest.raises(ValidationError):
         LocaleSettings(mkt="us")
     with pytest.raises(ValidationError):
@@ -301,12 +308,55 @@ def test_async_client_contract_bulkhead_and_borrowed_lifecycle() -> None:
     asyncio.run(scenario())
 
 
-def test_contract028_depth_and_removed_parameters() -> None:
-    assert SearchRequest(query="q", offset=99).offset == 99
-    assert ContentOptions(max_characters=9000).max_characters == 9000
+def test_max_results_and_removed_parameters() -> None:
+    assert SearchRequest(query="q", max_results=100).max_results == 100
+    assert TextOptions(max_characters=9000).max_characters == 9000
     with pytest.raises(ValidationError):
-        SearchRequest(query="q", offset=100)
+        SearchRequest(query="q", max_results=101)
     with pytest.raises(ValidationError):
         SearchRequest.model_validate({"query": "q", "topic": "news"})
     with pytest.raises(ValidationError):
         ContentOptions.model_validate({"images": 3})
+
+
+def test_sync_and_async_send_new_defaults_and_nested_text_options() -> None:
+    payloads: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payloads.append(json.loads(request.content))
+        return json_response()
+
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler)) as transport,
+        Ateve("sk_test", http_client=transport) as client,
+    ):
+        client.search("q")
+        client.search("q", content=ContentOptions(text=TextOptions()))
+        with pytest.raises(TypeError, match="options cannot be combined"):
+            client.search(SearchRequest(query="q"), max_results=1)
+
+    async def scenario() -> None:
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(handler)) as transport,
+            AsyncAteve("sk_test", http_client=transport) as client,
+        ):
+            await client.search("q", max_results=100, content=ContentOptions(snippet=False))
+            await client.search(
+                SearchRequest(query="q", content=ContentOptions(text=TextOptions()))
+            )
+
+    asyncio.run(scenario())
+    assert payloads == [
+        {"query": "q", "max_results": 10},
+        {
+            "query": "q",
+            "max_results": 10,
+            "content": {"snippet": True, "text": {"format": "text"}},
+        },
+        {"query": "q", "max_results": 100, "content": {"snippet": False}},
+        {
+            "query": "q",
+            "max_results": 10,
+            "content": {"snippet": True, "text": {"format": "text"}},
+        },
+    ]

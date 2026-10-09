@@ -75,9 +75,13 @@ Tooling lint checks Node script syntax, and tooling typecheck checks strict Type
 
 ## Shared API models
 
-[`packages/contract/`](packages/contract/) contains an OpenAPI 3.1
-**compatibility baseline extracted from SDK 0.1.0**, bindings and fixtures.
-This is not the latest authoritative server contract; alignment is separate.
+[`packages/contract/`](packages/contract/) contains the OpenAPI 3.1 contract,
+bindings and fixtures. Requests use `max_results` (1–100, default 10) and
+`content`, with optional `snippet` (default true) and nested `text` options.
+Responses were verified against live requests on October 9, 2026. Both text
+formats use the nullable `results[].text` field; obsolete response fields and
+unused nested models have been removed. Captured response fixtures cover
+default excerpts, plain text, Markdown and disabled snippets.
 
 [`tools/codegen/`](tools/codegen/) generates TS interfaces, Python Pydantic
 models and Java Builder/response classes. Generated files are committed:
@@ -100,19 +104,56 @@ modified tracked files. Verify packaged code locally after `pnpm build`:
 node tools/codegen/src/check-artifacts.ts
 ```
 
-All SDKs retain shared versions and `v*` tags. Existing
-[Java](.github/workflows/release-java.yml),
-[JS](.github/workflows/release-js.yml) and
-[Python](.github/workflows/release-python.yml) workflow identities are retained,
-with the full CI suite required before publishing. Update all package/client
-versions and contract `info.version` together; `pnpm versions:check` checks
-consistency and release tags.
+All SDKs share versions and `v*` tags. Update all package/client versions and
+contract `info.version` together; `pnpm versions:check` checks consistency and
+release tags.
 
-The npm workflow packs with pnpm, checks the public package identity in CI,
-then publishes that tarball with npm OIDC. For local packaging, use
-`pnpm --filter @ateve/js pack`; publish the resulting `ateve-*.tgz` rather
-than running `npm publish` on the workspace source manifest.
+[Release SDKs](.github/workflows/release-python.yml) is the single release
+entry point. Its existing filename and `pypi` environment preserve the PyPI
+trusted publisher identity. Pushing a release tag resolves it to a fixed commit,
+validates its version, runs the full CI compatibility matrix once, then starts
+three independent publishing jobs. Runs for the same tag are serialized.
 
-Java publishing uses `CENTRAL_USERNAME`, `CENTRAL_PASSWORD`, `GPG_PRIVATE_KEY`
-and `GPG_PASSPHRASE`. npm/PyPI retain OIDC trusted publishing. This refactor does
-not publish or change registry identities.
+| SDK                          | Publish job                                            | Authentication                | Build and verification                                                                                        |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| JS/TS (`ateve`)              | [release-js.yml](.github/workflows/release-js.yml)     | npm OIDC with provenance      | Publishes the exact pnpm tarball verified and uploaded by CI                                                  |
+| Python (`ateve`)             | Direct job in the release entry point                  | PyPI OIDC, environment `pypi` | Publishes the exact wheel and sdist verified and uploaded by CI                                               |
+| Java (`ai.ateve:ateve-java`) | [release-java.yml](.github/workflows/release-java.yml) | Central credentials and GPG   | Builds source/Javadoc artifacts and signs from the same checked commit; CI already ran tests on JDK 11 and 17 |
+
+For a failed registry, retry only that SDK via **Release SDKs → Run workflow**:
+select the release tag as the workflow ref, enter that same `release_tag`, and
+choose `js`, `python` or `java` for `sdk` (`all` publishes all three). For example:
+
+```bash
+gh workflow run release-python.yml --ref v0.2.0 -f release_tag=v0.2.0 -f sdk=js
+```
+
+Both automatic releases and manual retries require an existing tag whose version
+matches every SDK, and whose commit matches the workflow run. Branches, commit
+SHAs, missing tags and a different workflow commit are rejected before publishing.
+This also keeps npm/PyPI provenance tied to the source commit actually checked.
+The full matrix and package checks still run on a retry. Successfully published
+versions cannot be overwritten; retry only the failed SDK.
+
+For npm trusted publishing, configure package **ateve** with:
+
+- Organization: `ateve-inc`
+- Repository: `ateve-sdks`
+- Workflow filename: **`release-python.yml`** (the calling workflow)
+- Environment: leave empty (the npm job has no environment)
+- Allowed actions: enable **`npm publish`**
+
+The publishing job uses Node 24, npm 11.5.1 and `id-token: write`, with no npm
+write token. npm validates the caller filename when a reusable workflow publishes;
+see [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+If a publisher was configured for `release-js.yml`, replace it with the caller
+configuration before publishing. Create the configuration near the first publish:
+an unvalidated new publisher expires after two days.
+
+PyPI's publishing step stays directly in the entry workflow because
+[the PyPI action does not support trusted publishing inside reusable workflows](https://github.com/pypa/gh-action-pypi-publish#trusted-publishing).
+Java retains `CENTRAL_USERNAME`, `CENTRAL_PASSWORD`, `GPG_PRIVATE_KEY` and
+`GPG_PASSPHRASE`; only its publishing job receives these secrets.
+
+For local npm packaging, use `pnpm --filter @ateve/js pack`; publish the resulting
+`ateve-*.tgz` rather than the workspace source manifest, whose name is `@ateve/js`.

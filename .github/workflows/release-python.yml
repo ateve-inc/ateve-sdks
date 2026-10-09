@@ -1,44 +1,96 @@
-name: Release Python SDK
+# Keep this filename and the pypi environment to preserve the PyPI publisher identity.
+name: Release SDKs
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to publish (e.g. v0.2.0)
+        required: true
+        type: string
+      sdk:
+        description: SDK to publish; select one to retry a failed registry
+        required: true
+        default: all
+        type: choice
+        options: [all, js, python, java]
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: release-${{ inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  checks:
-    uses: ./.github/workflows/ci.yml
-  publish:
-    needs: checks
+  release:
+    if: github.event_name == 'workflow_dispatch' || github.event.deleted == false
     runs-on: ubuntu-latest
-    environment: pypi
-    defaults:
-      run:
-        working-directory: packages/python
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      release_tag: ${{ steps.resolve.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: pnpm
-      - uses: astral-sh/setup-uv@v6
+      - name: Resolve an existing release tag to its commit
+        id: resolve
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          # Keep provenance tied to the commit GitHub actually ran, including manual retries.
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: node tools/codegen/src/release.ts
+      - name: Validate all SDK versions against the selected tag
+        env:
+          RELEASE_TAG: ${{ steps.resolve.outputs.release_tag }}
+        run: GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" node tools/codegen/src/versions.ts
+
+  checks:
+    needs: release
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.release.outputs.ref }}
+      release_tag: ${{ needs.release.outputs.release_tag }}
+
+  publish-js:
+    needs: [release, checks]
+    if: github.event_name == 'push' || inputs.sdk == 'all' || inputs.sdk == 'js'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/release-js.yml
+
+  publish-python:
+    needs: [release, checks]
+    if: github.event_name == 'push' || inputs.sdk == 'all' || inputs.sdk == 'python'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
         with:
-          version: "0.12.23"
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Build distributions
-        run: |
-          uv sync --locked --package ateve
-          uv build --no-build-isolation --package ateve --sdist --wheel --out-dir dist
-      - run: pnpm install --frozen-lockfile && pnpm versions:check && pnpm generate:check
-        working-directory: .
-      - name: Publish to PyPI
+          name: python-sdk
+          path: dist
+      - name: Publish verified distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/python/dist/
+          packages-dir: dist/
+
+  publish-java:
+    needs: [release, checks]
+    if: github.event_name == 'push' || inputs.sdk == 'all' || inputs.sdk == 'java'
+    uses: ./.github/workflows/release-java.yml
+    with:
+      ref: ${{ needs.release.outputs.ref }}
+    secrets:
+      CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+      CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

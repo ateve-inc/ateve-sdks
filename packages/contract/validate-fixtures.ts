@@ -11,11 +11,18 @@ addFormats.default(ajv);
 // with the same components so fixtures are checked against the same definitions.
 ajv.addSchema({ $id: "ateve-contract", components: api.components });
 for (const [fixture, model] of [
+  ["golden-request", "SearchRequest"],
+  ["default-request", "SearchRequest"],
   ["golden-response", "SearchResponse"],
   ["golden-response-java", "SearchResponse"],
+  ["live-default-response", "SearchResponse"],
+  ["live-text-response", "SearchResponse"],
+  ["live-markdown-response", "SearchResponse"],
+  ["live-no-snippet-response", "SearchResponse"],
   ["error-400", "ErrorResponse"],
   ["error-401", "ErrorResponse"],
   ["error-429", "ErrorResponse"],
+  ["error-team-not-allowed", "ErrorResponse"],
 ]) {
   const validate = ajv.compile({ $ref: `ateve-contract#/components/schemas/${model}` });
   const data = JSON.parse(

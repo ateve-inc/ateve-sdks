@@ -5,8 +5,7 @@
             if (query.length() > {{query.maxLength}}) {
                 throw new IllegalArgumentException("query must not exceed {{query.maxLength}} characters");
             }
-            requireRange(limit, {{limit.minimum}}, {{limit.maximum}}, "limit");
-            requireRange(offset, {{offset.minimum}}, {{offset.maximum}}, "offset");
+            requireRange(maxResults, {{max_results.minimum}}, {{max_results.maximum}}, "maxResults");
             requireMaxSize(includeDomains, {{include_domains.maxItems}}, "includeDomains");
             requireMaxSize(excludeDomains, {{exclude_domains.maxItems}}, "excludeDomains");
             validateDateRange(dateRange);

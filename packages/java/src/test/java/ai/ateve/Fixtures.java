@@ -17,6 +17,10 @@ final class Fixtures {
     static final String ERROR_429 = load("error-429.json");
 
     static final String ERROR_400 = load("error-400.json");
+
+    static String liveResponse(String scenario) {
+        return load("live-" + scenario + "-response.json");
+    }
     private static String load(String name) {
         try (InputStream stream = Fixtures.class.getResourceAsStream("/" + name)) {
             if (stream == null) throw new IllegalStateException("Missing fixture: " + name);

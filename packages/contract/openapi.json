@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Ateve Search API — SDK compatibility baseline",
+    "title": "Ateve Search API — SDK contract",
     "version": "0.1.0",
-    "description": "Extracted from SDK 0.1.0 models, clients and tests. This is a local compatibility baseline, not the current authoritative server specification. Align with the server in a separate change."
+    "description": "Search request and response models aligned with live API probes on October 9, 2026. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
   },
   "servers": [
     {
@@ -26,7 +26,7 @@
       "ContentFormat": {
         "type": "string",
         "enum": ["text", "markdown"],
-        "description": "Format of raw_content in results."
+        "description": "Format of text in search results."
       },
       "UserLocation": {
         "type": "object",
@@ -69,31 +69,35 @@
         },
         "additionalProperties": false
       },
+      "TextOptions": {
+        "type": "object",
+        "description": "Options for retrieving full text. Passing an empty object enables text with server defaults.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "max_characters": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Per-result text character limit after format conversion; server default 5000."
+          },
+          "format": {
+            "$ref": "#/components/schemas/ContentFormat",
+            "default": "text"
+          }
+        },
+        "additionalProperties": false
+      },
       "ContentOptions": {
         "type": "object",
         "description": "ContentOptions model for POST /v1/search.",
         "x-sdk-kind": "request",
         "properties": {
           "snippet": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": true
           },
-          "raw_content": {
-            "type": "boolean"
-          },
-          "format": {
-            "$ref": "#/components/schemas/ContentFormat"
-          },
-          "summary": {
-            "type": "boolean"
-          },
-          "highlights": {
-            "type": "boolean"
-          },
-          "max_characters": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 2147483647,
-            "description": "Per-result raw content character limit; server default 5000."
+          "text": {
+            "$ref": "#/components/schemas/TextOptions"
           },
           "favicon": {
             "type": "boolean"
@@ -111,15 +115,11 @@
             "minLength": 1,
             "maxLength": 2000
           },
-          "limit": {
+          "max_results": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 50
-          },
-          "offset": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 99
+            "maximum": 100,
+            "default": 10
           },
           "date_range": {
             "type": "string",
@@ -173,80 +173,14 @@
         "additionalProperties": true,
         "required": ["url", "width", "height", "alt"]
       },
-      "VideoItem": {
-        "type": "object",
-        "description": "VideoItem model for POST /v1/search.",
-        "x-sdk-kind": "response",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "thumbnail": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "duration_seconds": {
-            "type": "integer"
-          }
-        },
-        "additionalProperties": true
-      },
-      "Citation": {
-        "type": "object",
-        "description": "Citation model for POST /v1/search.",
-        "x-sdk-kind": "response",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "start_index": {
-            "type": "integer"
-          },
-          "end_index": {
-            "type": "integer"
-          },
-          "quote": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
-      },
-      "AnswerBlock": {
-        "type": "object",
-        "description": "AnswerBlock model for POST /v1/search.",
-        "x-sdk-kind": "response",
-        "properties": {
-          "content": {
-            "type": "string"
-          },
-          "citations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Citation"
-            }
-          }
-        },
-        "additionalProperties": true
-      },
       "QueryInfo": {
         "type": "object",
         "description": "QueryInfo model for POST /v1/search.",
         "x-sdk-kind": "response",
         "properties": {
           "original": {
-            "type": "string"
-          },
-          "effective": {
-            "type": "string"
-          },
-          "auto_tuned": {
-            "type": "object",
-            "additionalProperties": true
+            "type": "string",
+            "description": "The submitted search query."
           }
         },
         "additionalProperties": true,
@@ -269,12 +203,6 @@
           "display_url": {
             "type": "string"
           },
-          "site_name": {
-            "type": "string"
-          },
-          "language": {
-            "type": "string"
-          },
           "published_at": {
             "type": ["string", "null"],
             "format": "date-time"
@@ -283,19 +211,12 @@
             "type": "number"
           },
           "snippet": {
-            "type": "string"
+            "type": "string",
+            "description": "Excerpt returned by default, including alongside text; omitted when content.snippet is false."
           },
-          "raw_content": {
-            "type": "string"
-          },
-          "summary": {
-            "type": ["string", "null"]
-          },
-          "highlights": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string"
-            }
+          "text": {
+            "type": ["string", "null"],
+            "description": "Extracted content when content.text is requested, in the selected text or Markdown format. Null when extraction fails; omitted when text is not requested."
           },
           "favicon": {
             "type": "string"
@@ -312,37 +233,6 @@
         },
         "additionalProperties": true,
         "required": ["images"]
-      },
-      "UsageBreakdown": {
-        "type": "object",
-        "description": "UsageBreakdown model for POST /v1/search.",
-        "x-sdk-kind": "response",
-        "properties": {
-          "search": {
-            "type": "integer"
-          },
-          "rerank": {
-            "type": "integer"
-          },
-          "answer": {
-            "type": "integer"
-          }
-        },
-        "additionalProperties": true
-      },
-      "Usage": {
-        "type": "object",
-        "description": "Usage model for POST /v1/search.",
-        "x-sdk-kind": "response",
-        "properties": {
-          "credits": {
-            "type": "integer"
-          },
-          "breakdown": {
-            "$ref": "#/components/schemas/UsageBreakdown"
-          }
-        },
-        "additionalProperties": true
       },
       "SearchResponse": {
         "type": "object",
@@ -362,39 +252,16 @@
           "query": {
             "$ref": "#/components/schemas/QueryInfo"
           },
-          "answer": {
-            "$ref": "#/components/schemas/AnswerBlock"
-          },
           "results": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SearchResult"
             }
           },
-          "news": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SearchResult"
-            }
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImageItem"
-            }
-          },
-          "videos": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VideoItem"
-            }
-          },
           "total_estimated_matches": {
             "type": ["integer", "null"],
-            "format": "int64"
-          },
-          "usage": {
-            "$ref": "#/components/schemas/Usage"
+            "format": "int64",
+            "description": "Estimated matches returned by the server; observed to equal the result count in live probes."
           }
         },
         "additionalProperties": true,

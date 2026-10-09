@@ -3,8 +3,7 @@ import { assign } from "./values";
 
 export function toWire(request: SearchRequest): Record<string, unknown> {
   const wire: Record<string, unknown> = { query: request.query };
-  assign(wire, "limit", request.limit);
-  assign(wire, "offset", request.offset);
+  wire.max_results = request.maxResults ?? 10;
   assign(wire, "date_range", request.dateRange);
   assign(wire, "include_domains", request.includeDomains);
   assign(wire, "exclude_domains", request.excludeDomains);
@@ -24,13 +23,12 @@ export function toWire(request: SearchRequest): Record<string, unknown> {
     wire.locale = locale;
   }
   if (request.content !== undefined) {
-    const content: Record<string, unknown> = {};
-    assign(content, "snippet", request.content.snippet);
-    assign(content, "raw_content", request.content.rawContent);
-    assign(content, "format", request.content.format);
-    assign(content, "summary", request.content.summary);
-    assign(content, "highlights", request.content.highlights);
-    assign(content, "max_characters", request.content.maxCharacters);
+    const content: Record<string, unknown> = { snippet: request.content.snippet ?? true };
+    if (request.content.text !== undefined) {
+      const text: Record<string, unknown> = { format: request.content.text.format ?? "text" };
+      assign(text, "max_characters", request.content.text.maxCharacters);
+      content.text = text;
+    }
     assign(content, "favicon", request.content.favicon);
     wire.content = content;
   }

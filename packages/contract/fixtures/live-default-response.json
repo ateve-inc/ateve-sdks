@@ -1,0 +1,52 @@
+{
+  "id": "req_live_default_response",
+  "created": 1791529256,
+  "latency_ms": 234,
+  "query": {
+    "original": "Python programming language"
+  },
+  "results": [
+    {
+      "id": "results.#0",
+      "title": "Plugins Quickstart download for Linux",
+      "url": "https://www.onworks.net/software/linux/app-plugins-quickstart",
+      "display_url": "https://www.onworks.net/software/linux/app-plugins-quickstart",
+      "published_at": "2026-08-18T05:42:49.000Z",
+      "score": 0.8097166302,
+      "snippet": "Programming Language\n\nPython",
+      "images": [
+        {
+          "url": "https://gtranslate.net/flags/blank.png",
+          "width": 32,
+          "height": 32,
+          "alt": "English"
+        },
+        {
+          "url": "https://www.onworks.net/images/onworkslogofavicon.ico",
+          "width": 1,
+          "height": 1,
+          "alt": "OnWorks favicon"
+        },
+        {
+          "url": "https://www.onworks.net/imagescropped/defaulticon.png_3.webp",
+          "width": 50,
+          "height": 50,
+          "alt": "Free download Plugins Quickstart Linux app to run online in Ubuntu online, Fedora online or Debian online"
+        }
+      ],
+      "is_safe": true
+    },
+    {
+      "id": "results.#1",
+      "title": "Title: Generating semantic maps through multidimensional scaling: linguistic applications and theory",
+      "url": "https://arxiv.org/abs/2012.04946",
+      "display_url": "https://arxiv.org/abs/2012.04946",
+      "published_at": "2026-08-08T03:54:23.000Z",
+      "score": 0.7845612016,
+      "snippet": "Computer Science > Computation and Language",
+      "images": [],
+      "is_safe": true
+    }
+  ],
+  "total_estimated_matches": 2
+}

@@ -1,0 +1,54 @@
+{
+  "id": "req_live_text_response",
+  "created": 1791529312,
+  "latency_ms": 6,
+  "query": {
+    "original": "Python programming language"
+  },
+  "results": [
+    {
+      "id": "results.#0",
+      "title": "pyOffice download for Linux",
+      "url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "display_url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "published_at": "2026-08-14T21:08:12.000Z",
+      "score": 0.8097166302,
+      "snippet": "Programming Language\n\nPython",
+      "text": "pyOffice download for Linux\n\nThis is the Linux app named pyOffice whose latest release can be downloaded as XRSSfeedforfil. It can be run online in the free hosting provider OnWorks for workstations.\n\nDownload and run online this app named pyOffice with OnWorks for free.\n\nFollow these instructions i",
+      "images": [
+        {
+          "url": "https://gtranslate.net/flags/blank.png",
+          "width": 32,
+          "height": 32,
+          "alt": "English"
+        },
+        {
+          "url": "https://www.onworks.net/images/onworkslogofavicon.ico",
+          "width": 1,
+          "height": 1,
+          "alt": "OnWorks favicon"
+        },
+        {
+          "url": "https://www.onworks.net/imagescropped/defaulticon.png_3.webp",
+          "width": 50,
+          "height": 50,
+          "alt": "Free download pyOffice Linux app to run online in Ubuntu online, Fedora online or Debian online"
+        }
+      ],
+      "is_safe": true
+    },
+    {
+      "id": "results.#1",
+      "title": "Title: Generating semantic maps through multidimensional scaling: linguistic applications and theory",
+      "url": "https://arxiv.org/abs/2012.04946",
+      "display_url": "https://arxiv.org/abs/2012.04946",
+      "published_at": "2026-08-08T03:54:23.000Z",
+      "score": 0.7845612016,
+      "snippet": "Computer Science > Computation and Language",
+      "text": null,
+      "images": [],
+      "is_safe": true
+    }
+  ],
+  "total_estimated_matches": 2
+}

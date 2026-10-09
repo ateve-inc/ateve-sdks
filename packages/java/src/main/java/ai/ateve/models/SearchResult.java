@@ -14,16 +14,12 @@ public final class SearchResult {
     private String title;
     private String url;
     private String displayUrl;
-    private String siteName;
-    private String language;
     @JsonSerialize(using = InstantMillis.Serializer.class)
     @JsonDeserialize(using = InstantMillis.Deserializer.class)
     private Instant publishedAt;
     private Double score;
     private String snippet;
-    private String rawContent;
-    private String summary;
-    private List<String> highlights;
+    private String text;
     private String favicon;
     private List<ImageItem> images;
     private Boolean isSafe;
@@ -34,14 +30,10 @@ public final class SearchResult {
     public String title() { return title; }
     public String url() { return url; }
     public String displayUrl() { return displayUrl; }
-    public String siteName() { return siteName; }
-    public String language() { return language; }
     public Instant publishedAt() { return publishedAt; }
     public Double score() { return score; }
     public String snippet() { return snippet; }
-    public String rawContent() { return rawContent; }
-    public String summary() { return summary; }
-    public List<String> highlights() { return highlights == null ? null : Collections.unmodifiableList(highlights); }
+    public String text() { return text; }
     public String favicon() { return favicon; }
     public List<ImageItem> images() { return images == null ? null : Collections.unmodifiableList(images); }
     public Boolean isSafe() { return isSafe; }

@@ -7,55 +7,30 @@ package ai.ateve.models;
 public final class ContentOptions {
 
     private final Boolean snippet;
-    private final Boolean rawContent;
-    private final ContentFormat format;
-    private final Boolean summary;
-    private final Boolean highlights;
-    private final Integer maxCharacters;
+    private final TextOptions text;
     private final Boolean favicon;
 
     private ContentOptions(Builder b) {
         this.snippet = b.snippet;
-        this.rawContent = b.rawContent;
-        this.format = b.format;
-        this.summary = b.summary;
-        this.highlights = b.highlights;
-        this.maxCharacters = b.maxCharacters;
+        this.text = b.text;
         this.favicon = b.favicon;
     }
 
     public static Builder builder() { return new Builder(); }
 
     public Boolean snippet() { return snippet; }
-    public Boolean rawContent() { return rawContent; }
-    public ContentFormat format() { return format; }
-    public Boolean summary() { return summary; }
-    public Boolean highlights() { return highlights; }
-    public Integer maxCharacters() { return maxCharacters; }
+    public TextOptions text() { return text; }
     public Boolean favicon() { return favicon; }
 
     public static final class Builder {
-        private Boolean snippet;
-        private Boolean rawContent;
-        private ContentFormat format;
-        private Boolean summary;
-        private Boolean highlights;
-        private Integer maxCharacters;
+        private Boolean snippet = true;
+        private TextOptions text;
         private Boolean favicon;
 
         public Builder snippet(Boolean snippet) { this.snippet = snippet; return this; }
-        public Builder rawContent(Boolean rawContent) { this.rawContent = rawContent; return this; }
-        public Builder format(ContentFormat format) { this.format = format; return this; }
-        public Builder summary(Boolean summary) { this.summary = summary; return this; }
-        public Builder highlights(Boolean highlights) { this.highlights = highlights; return this; }
-        public Builder maxCharacters(Integer maxCharacters) { this.maxCharacters = maxCharacters; return this; }
+        public Builder text(TextOptions text) { this.text = text; return this; }
         public Builder favicon(Boolean favicon) { this.favicon = favicon; return this; }
 
-        public ContentOptions build() {
-            if (maxCharacters != null && maxCharacters < 1) {
-                throw new IllegalArgumentException("maxCharacters must be positive");
-            }
-            return new ContentOptions(this);
-        }
+        public ContentOptions build() { return new ContentOptions(this); }
     }
 }

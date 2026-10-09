@@ -11,15 +11,16 @@ pip install ateve
 ## Synchronous
 
 ```python
-from ateve import Ateve, ContentOptions
+from ateve import Ateve, ContentFormat, ContentOptions, TextOptions
 
 with Ateve() as client:  # reads ATEVE_API_KEY
     response = client.search(
         query="quantum computing",
         date_range="week",
-        content=ContentOptions(summary=True, highlights=True),
+        max_results=10,
+        content=ContentOptions(text=TextOptions(format=ContentFormat.MARKDOWN, max_characters=8000)),
     )
-    print(response.results[0].title, response.usage.credits)
+    print(response.results[0].title, response.results[0].text)
 ```
 
 ## Asynchronous
@@ -28,7 +29,7 @@ with Ateve() as client:  # reads ATEVE_API_KEY
 from ateve import AsyncAteve
 
 async with AsyncAteve() as client:
-    response = await client.search("quantum computing", limit=10)
+    response = await client.search("quantum computing", max_results=10)
 ```
 
 `Ateve` owns and closes its default `httpx.Client`; `AsyncAteve` does the same
@@ -54,16 +55,20 @@ decisions remain caller-owned.
 
 ## Search contract limits
 
-Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `ContentOptions(raw_content=True, max_characters=8000)`. The limit is a positive signed 32-bit integer with no fixed business cap.
+Use `max_results` (1–100, default 10); `limit` and `offset` have been removed.
+`ContentOptions.snippet` is optional and defaults to `True`. To retrieve full
+text, pass `content=ContentOptions(text=TextOptions())`, or configure
+`TextOptions(max_characters=8000, format=ContentFormat.MARKDOWN)`.
+`format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
+request full text. `max_characters` remains a strict positive signed 32-bit
+integer; its server default is 5000 per result, applied after format conversion.
+`summary` and `highlights` have been removed from `ContentOptions`; `favicon`
+remains optional. Both synchronous and asynchronous clients accept `content`
+and `max_results`, or a `SearchRequest` instance.
 
-## Repository development
-
-See the [root development guide](../../README.md) for workspace setup and
-checks. API models are generated from the [compatibility contract](../contract/).
-Run `pnpm generate` from the repository root after changing models; do not
-edit files marked as generated. Published packages include the models.
-
-This package is a native uv workspace member. Dependencies are locked in
-the repository's root `uv.lock`, and `uv run --locked pytest` from this
-directory uses the shared root `.venv`. Standalone copies can still use
-`uv sync`, `uv run pytest` and `uv build` with this package's `pyproject.toml`.
+Both formats return content in `SearchResult.text`. It defaults to `None` when
+absent or when extraction fails; `model_fields_set` distinguishes those cases.
+Snippets may coexist with text; set `ContentOptions(snippet=False)` to omit
+them. Obsolete answer, usage, news/video, query tuning and raw content/summary/
+highlights response fields and models have been removed. Unknown response
+fields continue to be retained by Pydantic for forward compatibility.

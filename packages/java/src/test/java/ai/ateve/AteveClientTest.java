@@ -8,11 +8,13 @@ import ai.ateve.errors.InvalidRequestException;
 import ai.ateve.errors.PaymentRequiredException;
 import ai.ateve.errors.RateLimitException;
 import ai.ateve.errors.ServerException;
+import ai.ateve.internal.Json;
 import ai.ateve.models.ContentFormat;
 import ai.ateve.models.ContentOptions;
 import ai.ateve.models.LocaleSettings;
 import ai.ateve.models.SearchRequest;
 import ai.ateve.models.SearchResponse;
+import ai.ateve.models.TextOptions;
 import ai.ateve.models.UserLocation;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +24,7 @@ import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -76,15 +79,32 @@ class AteveClientTest {
             assertEquals("srch_01J9ZK3V6XQ8", response.id());
             assertEquals(412, response.latencyMs());
             assertEquals(128000L, response.totalEstimatedMatches());
-            assertEquals("climate policy analysis 2026", response.query().effective());
-            assertEquals(Boolean.TRUE, response.query().autoTuned().get("freshness_boost"));
-            assertEquals(42, response.answer().citations().get(0).endIndex());
+            assertEquals("climate policy analysis", response.query().original());
             assertEquals("reuters.com/article/abc", response.results().get(0).displayUrl());
             assertEquals(Instant.parse("2026-06-12T08:30:00Z"),
                     response.results().get(0).publishedAt());
-            assertEquals(List.of("framework introduces", "carbon pricing"),
-                    response.results().get(0).highlights());
-            assertEquals(3, response.usage().credits());
+            assertEquals("The framework introduces...", response.results().get(0).snippet());
+        }
+    }
+
+    @Test
+    void capturedLiveResponsesDecodeTextNullsAndOmittedSnippets() throws Exception {
+        for (String scenario : List.of("default", "text", "markdown", "no-snippet")) {
+            try (MockApi api = new MockApi()) {
+                api.enqueue(200, Fixtures.liveResponse(scenario));
+                SearchResponse response = client(api).search(minimalRequest());
+                assertEquals("Python programming language", response.query().original());
+                assertEquals(response.results().size(), response.totalEstimatedMatches().intValue());
+                if (scenario.equals("text") || scenario.equals("markdown")) {
+                    assertEquals(300, response.results().get(0).text().length());
+                    assertNull(response.results().get(1).text());
+                    assertTrue(response.results().get(0).snippet() != null);
+                    assertEquals(scenario.equals("markdown"), response.results().get(0).text().startsWith("# "));
+                } else {
+                    assertNull(response.results().get(0).text());
+                }
+                if (scenario.equals("no-snippet")) assertNull(response.results().get(0).snippet());
+            }
         }
     }
 
@@ -95,17 +115,22 @@ class AteveClientTest {
 
             client(api).search(SearchRequest.builder()
                     .query("climate policy analysis")
-                    .limit(20)
+                    .maxResults(20)
                     .dateRange("2026-01-01..2026-06-30")
                     .locale(LocaleSettings.builder().mkt("US").language("en").build())
                     .includeDomains(List.of("reuters.com"))
-                    .content(ContentOptions.builder()
-                            .summary(true).format(ContentFormat.MARKDOWN).maxCharacters(5000).build())
+                    .content(ContentOptions.builder().snippet(false)
+                            .text(TextOptions.builder().format(ContentFormat.MARKDOWN).maxCharacters(5000).build()).build())
                     .safeSearch(true)
                     .build());
 
             String body = api.receivedBodies.get(0);
-            assertTrue(body.contains("\"max_characters\":5000"), body);
+            Map<?, ?> payload = Json.read(body.getBytes(StandardCharsets.UTF_8), Map.class);
+            assertEquals(20, payload.get("max_results"));
+            assertEquals(Map.of("snippet", false,
+                    "text", Map.of("max_characters", 5000, "format", "markdown")), payload.get("content"));
+            assertFalse(body.contains("\"limit\""), body);
+            assertFalse(body.contains("\"contents\""), body);
             assertFalse(body.contains("\"topic\""), body);
             assertFalse(body.contains("\"images\""), body);
             assertTrue(body.contains("\"date_range\":\"2026-01-01..2026-06-30\""), body);
@@ -228,9 +253,7 @@ class AteveClientTest {
             assertThrows(UnsupportedOperationException.class,
                     () -> response.results().clear());
             assertThrows(UnsupportedOperationException.class,
-                    () -> response.query().autoTuned().put("unexpected", true));
-            assertThrows(UnsupportedOperationException.class,
-                    () -> response.results().get(0).highlights().add("unexpected"));
+                    () -> response.results().get(0).images().add(null));
         }
     }
 
@@ -583,13 +606,13 @@ class AteveClientTest {
     void modelBuildersSnapshotCallerState() {
         SearchRequest.Builder builder = SearchRequest.builder().query("first");
         SearchRequest first = builder.build();
-        builder.query("second").limit(5);
+        builder.query("second").maxResults(5);
         SearchRequest second = builder.build();
 
         assertEquals("first", first.query());
-        assertNull(first.limit());
+        assertEquals(10, first.maxResults());
         assertEquals("second", second.query());
-        assertEquals(5, second.limit());
+        assertEquals(5, second.maxResults());
 
         List<String> domains = new ArrayList<>(List.of("reuters.com"));
         SearchRequest copied = SearchRequest.builder()
@@ -605,23 +628,42 @@ class AteveClientTest {
     }
 
     @Test
+    void requestDefaultsEnableTextOnlyWhenItsObjectIsProvided() throws Exception {
+        assertEquals(10, SearchRequest.builder().query("q").build().maxResults());
+        assertEquals(Boolean.TRUE, ContentOptions.builder().build().snippet());
+        assertNull(ContentOptions.builder().build().text());
+        assertEquals(ContentFormat.TEXT, TextOptions.builder().build().format());
+        assertEquals(Integer.MAX_VALUE,
+                TextOptions.builder().maxCharacters(Integer.MAX_VALUE).build().maxCharacters());
+        try (MockApi api = new MockApi()) {
+            api.enqueue(200, Fixtures.GOLDEN_RESPONSE);
+            client(api).search(SearchRequest.builder().query("q")
+                    .content(ContentOptions.builder().snippet(false)
+                            .text(TextOptions.builder().build()).build()).build());
+            Map<?, ?> payload = Json.read(api.receivedBodies.get(0).getBytes(StandardCharsets.UTF_8), Map.class);
+            assertEquals(Map.of("query", "q", "max_results", 10,
+                    "content", Map.of("snippet", false, "text", Map.of("format", "text"))), payload);
+        }
+    }
+
+    @Test
     void requestBuildersValidatePublishedContractBeforeNetworkIo() {
         assertThrows(IllegalArgumentException.class,
                 () -> SearchRequest.builder().query("x".repeat(2001)).build());
         assertThrows(IllegalArgumentException.class,
-                () -> SearchRequest.builder().query("x").limit(0).build());
+                () -> SearchRequest.builder().query("x").maxResults(0).build());
         assertThrows(IllegalArgumentException.class,
-                () -> SearchRequest.builder().query("x").offset(1001).build());
+                () -> SearchRequest.builder().query("x").maxResults(101).build());
         assertThrows(IllegalArgumentException.class,
                 () -> SearchRequest.builder().query("x").dateRange("2026-02-31").build());
         assertThrows(IllegalArgumentException.class,
                 () -> SearchRequest.builder().query("x")
                         .dateRange("2026-07-31..2026-01-01").build());
         assertThrows(IllegalArgumentException.class,
-                () -> ContentOptions.builder().maxCharacters(0).build());
+                () -> TextOptions.builder().maxCharacters(0).build());
         assertThrows(IllegalArgumentException.class,
-                () -> SearchRequest.builder().query("q").offset(100).build());
-        assertEquals(99, SearchRequest.builder().query("q").offset(99).build().offset());
+                () -> SearchRequest.builder().query("q").maxResults(-1).build());
+        assertEquals(100, SearchRequest.builder().query("q").maxResults(100).build().maxResults());
         assertThrows(IllegalArgumentException.class,
                 () -> LocaleSettings.builder().mkt("us").build());
         assertThrows(IllegalArgumentException.class,

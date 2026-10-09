@@ -28,10 +28,10 @@ describe("Ateve JavaScript SDK", () => {
 
     const response = await client.search({
       query: "climate policy analysis",
-      limit: 20,
+      maxResults: 20,
       dateRange: "2026-01-01..2026-06-30",
       locale: { mkt: "US", language: "en" },
-      content: { summary: true, format: "markdown", maxCharacters: 5000 },
+      content: { snippet: false, text: { format: "markdown", maxCharacters: 5000 } },
       safeSearch: false,
     });
 
@@ -39,7 +39,12 @@ describe("Ateve JavaScript SDK", () => {
     expect(capturedUrl).toBe("https://api.test/v1/search");
     expect(wire.date_range).toBe("2026-01-01..2026-06-30");
     expect(wire.safe_search).toBe(false);
-    expect(wire.content).toHaveProperty("max_characters", 5000);
+    expect(wire.max_results).toBe(20);
+    expect(wire.content).toEqual({
+      snippet: false,
+      text: { format: "markdown", max_characters: 5000 },
+    });
+    for (const name of ["limit", "offset", "contents"]) expect(wire).not.toHaveProperty(name);
     expect(wire.content).not.toHaveProperty("images");
     expect(wire).not.toHaveProperty("topic");
     expect(wire).not.toHaveProperty("dateRange");
@@ -48,7 +53,8 @@ describe("Ateve JavaScript SDK", () => {
     expect(capturedInit?.redirect).toBe("manual");
     expect(response.latencyMs).toBe(412);
     expect(response.results[0]?.displayUrl).toBe("https://reuters.com/article/abc");
-    expect(response.usage?.credits).toBe(3);
+    expect(response.query.original).toBe("climate policy analysis");
+    expect(response.totalEstimatedMatches).toBe(128000);
   });
 
   it("does not retry and preserves rate-limit hints", async () => {
@@ -83,6 +89,54 @@ describe("Ateve JavaScript SDK", () => {
     expect(error.limitScope).toBe("qpm");
     expect(error.isRetryable).toBe(true);
     expect(hits).toBe(1);
+  });
+
+  it("applies request defaults and enables text only when its object is supplied", async () => {
+    const bodies: unknown[] = [];
+    const client = new Ateve({
+      apiKey: "sk_test",
+      fetch: async (_input, init) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return jsonResponse();
+      },
+    });
+    await client.search({ query: "q" });
+    await client.search({ query: "q", content: {} });
+    await client.search({ query: "q", maxResults: 1, content: { snippet: false, text: {} } });
+    expect(bodies).toEqual([
+      { query: "q", max_results: 10 },
+      { query: "q", max_results: 10, content: { snippet: true } },
+      { query: "q", max_results: 1, content: { snippet: false, text: { format: "text" } } },
+    ]);
+  });
+
+  it("rejects invalid result counts and text options before sending a request", async () => {
+    let hits = 0;
+    const client = new Ateve({
+      apiKey: "sk_test",
+      fetch: async () => {
+        hits++;
+        return jsonResponse();
+      },
+    });
+    for (const maxResults of [0, -1, 101, 1.5, NaN, Infinity]) {
+      await expect(client.search({ query: "q", maxResults })).rejects.toThrow("maxResults");
+    }
+    for (const maxCharacters of [0, -1, 2_147_483_648, 1.5]) {
+      await expect(
+        client.search({ query: "q", content: { text: { maxCharacters } } }),
+      ).rejects.toThrow("maxCharacters");
+    }
+    // JavaScript callers are not protected by the TypeScript enum or object types.
+    await expect(
+      // @ts-expect-error Invalid wire format must also fail at runtime.
+      client.search({ query: "q", content: { text: { format: "html" } } }),
+    ).rejects.toThrow("format");
+    // @ts-expect-error The former boolean raw_content option no longer applies.
+    await expect(client.search({ query: "q", content: { text: true } })).rejects.toThrow(
+      "must be an object",
+    );
+    expect(hits).toBe(0);
   });
 
   it("does not turn an empty Retry-After header into a zero-second hint", async () => {
@@ -257,14 +311,14 @@ describe("Ateve JavaScript SDK", () => {
           fetch,
         }),
     ).toThrow("user-info");
-    await expect(client.search({ query: "q", offset: 100 })).rejects.toThrow("offset");
-    await expect(client.search({ query: "q", content: { maxCharacters: 0 } })).rejects.toThrow(
-      "maxCharacters",
-    );
+    await expect(client.search({ query: "q", maxResults: 101 })).rejects.toThrow("maxResults");
     await expect(
-      client.search({ query: "q", offset: 99, content: { maxCharacters: 8000 } }),
+      client.search({ query: "q", content: { text: { maxCharacters: 0 } } }),
+    ).rejects.toThrow("maxCharacters");
+    await expect(
+      client.search({ query: "q", maxResults: 100, content: { text: { maxCharacters: 8000 } } }),
     ).resolves.toBeDefined();
-    await expect(client.search({ query: " ", limit: 0 })).rejects.toThrow("query");
+    await expect(client.search({ query: " ", maxResults: 0 })).rejects.toThrow("query");
     await expect(client.search({ query: "q", dateRange: "2026-02-31" })).rejects.toThrow(
       "calendar date",
     );

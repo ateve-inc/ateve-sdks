@@ -70,9 +70,17 @@ export function validateRequest(request: SearchRequest): void {
   if (request.query.length > 2_000) {
     throw new Error("query must not exceed 2000 characters");
   }
-  requireIntegerRange(request.limit, 1, 50, "limit");
-  requireIntegerRange(request.offset, 0, 99, "offset");
-  requireIntegerRange(request.content?.maxCharacters, 1, 2_147_483_647, "content.maxCharacters");
+  requireIntegerRange(request.maxResults, 1, 100, "maxResults");
+  if (request.content?.text !== undefined) {
+    const text = request.content.text;
+    if (typeof text !== "object" || text === null || Array.isArray(text)) {
+      throw new Error("content.text must be an object");
+    }
+    requireIntegerRange(text.maxCharacters, 1, 2_147_483_647, "content.text.maxCharacters");
+    if (text.format !== undefined && !["text", "markdown"].includes(text.format)) {
+      throw new Error("content.text.format must be 'text' or 'markdown'");
+    }
+  }
   if ((request.includeDomains?.length ?? 0) > 300) {
     throw new Error("includeDomains must not exceed 300 entries");
   }

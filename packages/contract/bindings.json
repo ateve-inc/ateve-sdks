@@ -27,11 +27,6 @@
     }
   },
   "fields": {
-    "ContentOptions.max_characters": {
-      "python": {
-        "strict": true
-      }
-    },
     "ImageItem.width": {
       "python": {
         "required": false
@@ -50,6 +45,11 @@
     "SearchResult.images": {
       "python": {
         "defaultFactory": "list"
+      }
+    },
+    "TextOptions.max_characters": {
+      "python": {
+        "strict": true
       }
     }
   }

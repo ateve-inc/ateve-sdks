@@ -1,0 +1,12 @@
+{
+  "query": "climate policy analysis",
+  "max_results": 20,
+  "content": {
+    "snippet": false,
+    "text": {
+      "max_characters": 5000,
+      "format": "markdown"
+    },
+    "favicon": true
+  }
+}

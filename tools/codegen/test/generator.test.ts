@@ -29,15 +29,15 @@ test("generation is deterministic and preserves language-specific model shapes",
 
 test("adding and removing fields updates all three language outputs", () => {
   const [api, bindings] = loadContract();
-  api.components.schemas.VideoItem.properties!.provider_name = { type: "string" };
+  api.components.schemas.SearchResult.properties!.provider_name = { type: "string" };
   let generated = render(api, bindings);
   assert.match(generated.js["src/types.ts"], /providerName\?: string/);
   assert.match(generated.python["src/ateve/models.py"], /provider_name: Optional\[str\]/);
   assert.match(
-    generated.java["src/main/java/ai/ateve/models/VideoItem.java"],
+    generated.java["src/main/java/ai/ateve/models/SearchResult.java"],
     /String providerName\(\)/,
   );
-  delete api.components.schemas.VideoItem.properties!.provider_name;
+  delete api.components.schemas.SearchResult.properties!.provider_name;
   generated = render(api, bindings);
   for (const lang of Object.values(generated))
     assert.doesNotMatch(Object.values(lang).join("\n"), /provider_name|providerName/);
@@ -48,12 +48,71 @@ test("new models are generated and exported without a duplicated model registry"
   api.components.schemas.SearchMetadata = {
     type: "object",
     "x-sdk-kind": "response",
-    properties: { source: { type: "string" } },
+    properties: {
+      source: { type: "string" },
+      metadata: { type: "object", additionalProperties: true },
+    },
   };
   const generated = render(api, bindings);
   assert.match(generated.js["src/types.ts"], /interface SearchMetadata/);
   assert.match(generated.python["src/ateve/_model_exports.py"], /"SearchMetadata"/);
+  assert.match(
+    generated.python["src/ateve/models.py"],
+    /from typing import Any, Dict, List, Optional/,
+  );
+  assert.match(generated.python["src/ateve/models.py"], /metadata: Optional\[Dict\[str, Any\]\]/);
   assert.ok(generated.java["src/main/java/ai/ateve/models/SearchMetadata.java"]);
+});
+
+test("primitive and referenced enum defaults propagate and remain optional", () => {
+  const [api, bindings] = loadContract();
+  api.components.schemas.SearchRequest.properties!.max_results.default = 25;
+  api.components.schemas.ContentOptions.properties!.snippet.default = false;
+  api.components.schemas.TextOptions.properties!.format.default = "markdown";
+  const generated = render(api, bindings);
+  assert.match(generated.js["src/types.ts"], /@default 25.*\n  maxResults\?: number/);
+  assert.match(
+    generated.python["src/ateve/models.py"],
+    /max_results: Optional\[int\] = Field\(default=25, ge=1, le=100\)/,
+  );
+  assert.match(
+    generated.python["src/ateve/models.py"],
+    /snippet: Optional\[bool\] = Field\(default=False\)/,
+  );
+  assert.match(
+    generated.python["src/ateve/models.py"],
+    /format: Optional\[ContentFormat\] = Field\(default=ContentFormat.MARKDOWN\)/,
+  );
+  assert.match(
+    generated.java["src/main/java/ai/ateve/models/SearchRequest.java"],
+    /Integer maxResults = 25/,
+  );
+  assert.match(
+    generated.java["src/main/java/ai/ateve/models/ContentOptions.java"],
+    /Boolean snippet = false/,
+  );
+  assert.match(
+    generated.java["src/main/java/ai/ateve/models/TextOptions.java"],
+    /ContentFormat format = ContentFormat.MARKDOWN/,
+  );
+});
+
+test("unsupported, mistyped and out-of-range defaults fail explicitly", () => {
+  const cases: [string, string, unknown][] = [
+    ["SearchRequest", "max_results", 0],
+    ["SearchRequest", "max_results", 101],
+    ["SearchRequest", "max_results", 1.5],
+    ["SearchRequest", "max_results", "10"],
+    ["ContentOptions", "snippet", "true"],
+    ["ContentOptions", "text", {}],
+    ["TextOptions", "format", "html"],
+  ];
+  for (const [model, field, value] of cases) {
+    const [api, bindings] = loadContract();
+    const property = api.components.schemas[model].properties![field];
+    Object.assign(property, { default: value });
+    assert.throws(() => render(api, bindings), /Invalid default/);
+  }
 });
 
 test("unsupported structures, unresolved references and stale bindings fail closed", () => {
@@ -64,7 +123,7 @@ test("unsupported structures, unresolved references and stale bindings fail clos
   ];
   for (const [property, error] of cases) {
     const [api, bindings] = loadContract();
-    api.components.schemas.VideoItem.properties!.new_field = property;
+    api.components.schemas.SearchResult.properties!.new_field = property;
     assert.throws(() => render(api, bindings), error);
   }
   const [api, bindings] = loadContract();
