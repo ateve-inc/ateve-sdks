@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ateve Search API — SDK contract",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Search request and response models aligned with live API probes on October 9, 2026. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
   },
   "servers": [
