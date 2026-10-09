@@ -1,4 +1,3 @@
-import sharedGoldenResponse from "../../contract/fixtures/golden-response.json";
 import { describe, expect, it } from "vitest";
 import Ateve, {
   ApiConnectionError,
@@ -10,19 +9,7 @@ import Ateve, {
   type Fetch,
 } from "../src";
 
-const goldenResponse = sharedGoldenResponse;
-
-function jsonResponse(value: unknown = goldenResponse, init: ResponseInit = {}): Response {
-  return new Response(JSON.stringify(value), {
-    status: 200,
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": "req_header",
-      ...init.headers,
-    },
-  });
-}
+import { jsonResponse } from "./helpers";
 
 describe("Ateve JavaScript SDK", () => {
   it("maps camelCase to snake_case and returns typed camelCase data", async () => {

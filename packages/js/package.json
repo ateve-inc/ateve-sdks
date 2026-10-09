@@ -22,7 +22,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.txt"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -30,9 +31,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -41,19 +47,20 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "node ../../tools/codegen/src/versions.ts && node ../../tools/codegen/src/cli.ts check && npm run lint && npm run typecheck && npm test && npm run build",
-    "lint": "oxlint --max-warnings=0 src test tsup.config.ts",
+    "lint": "oxlint --max-warnings=0 src test tsdown.config.mts",
     "generate": "node ../../tools/codegen/src/cli.ts sync js"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "ofetch": "2.0.0-alpha.3",
     "oxlint": "^1.87.0",
-    "tsup": "^8.4.0",
+    "tsdown": "^0.23.0",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=22"

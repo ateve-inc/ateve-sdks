@@ -47,15 +47,3 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 ## Search contract limits
 
 Only the first 100 results are accessible: offset 0–99, limit 1–50. Pages crossing depth 100 are truncated. The content character limit defaults to 5000 per raw_content, after output format conversion; it does not enable raw_content. Use `content: { rawContent: true, maxCharacters: 8000 }`. The limit is a positive signed 32-bit integer with no fixed business cap.
-
-## Repository development
-
-See the [root development guide](../../README.md) for workspace setup and
-checks. API models are generated from the [compatibility contract](../contract/).
-Run `pnpm generate` from the repository root after changing models; do not
-edit files marked as generated. Published packages include the models.
-
-Run `pnpm --filter @ateve/js lint` for oxlint correctness checks, and
-`pnpm --filter @ateve/js typecheck` for TypeScript checks. From the repository
-root, `pnpm format` writes oxfmt formatting and `pnpm format:check` checks it;
-generated models are excluded from formatting.
