@@ -164,6 +164,9 @@ SHAs, missing tags and a different workflow commit are rejected before publishin
 This also keeps npm/PyPI provenance tied to the source commit actually checked.
 The full matrix and package checks still run on a retry. Successfully published
 versions cannot be overwritten; retry only the failed SDK.
+Workflow fixes take effect only in release tags that contain them. Rerunning an
+older tag uses its original workflow definition; release a new version to apply
+changes to the publishing workflow.
 
 For npm trusted publishing, configure package **ateve** with:
 
@@ -186,6 +189,11 @@ PyPI's publishing step stays directly in the entry workflow because
 [the PyPI action does not support trusted publishing inside reusable workflows](https://github.com/pypa/gh-action-pypi-publish#trusted-publishing).
 Java retains `CENTRAL_USERNAME`, `CENTRAL_PASSWORD`, `GPG_PRIVATE_KEY` and
 `GPG_PASSPHRASE`; only its publishing job receives these secrets.
+Java publishing pins Maven 3.9.16 and verifies the downloaded binary's SHA-512.
+Maven 3.10 writes `maven-metadata-local.xml` into the Central staging directory;
+the current publishing plugin includes it in the bundle, which Central rejects
+as content without a matching POM. The compatibility checks can still use the
+runner's Maven version.
 
 For local npm packaging, use `pnpm --filter @ateve/js pack`; publish the resulting
 `ateve-*.tgz` rather than the workspace source manifest, whose name is `@ateve/js`.
