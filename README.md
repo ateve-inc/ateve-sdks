@@ -165,8 +165,7 @@ This also keeps npm/PyPI provenance tied to the source commit actually checked.
 The full matrix and package checks still run on a retry. Successfully published
 versions cannot be overwritten; retry only the failed SDK.
 Workflow fixes take effect only in release tags that contain them. Rerunning an
-older tag uses its original workflow definition. Java can instead use the
-dedicated recovery workflow below to apply workflow fixes to an existing release.
+older tag uses its original workflow definition.
 
 For npm trusted publishing, configure package **ateve** with:
 
@@ -194,23 +193,6 @@ Maven 3.10 writes `maven-metadata-local.xml` into the Central staging directory;
 the current publishing plugin includes it in the bundle, which Central rejects
 as content without a matching POM. The compatibility checks can still use the
 runner's Maven version.
-
-For a failed Java release that needs updated publishing tools, use
-[Retry Java release](.github/workflows/release-java-retry.yml). First push the
-workflow fixes to `main`, then run the recovery workflow from `main` with the
-original release tag:
-
-```bash
-gh workflow run release-java-retry.yml --repo ateve-inc/ateve-sdks \
-  --ref main -f release_tag=v0.2.0
-```
-
-This entry point resolves an existing `v*` tag to a fixed source commit, runs the
-full compatibility matrix and package checks against that commit, and publishes
-only Java using the current Java workflow. Versions and tags remain unchanged;
-JS and Python are not republished. The run uses the same per-tag concurrency
-group as Release SDKs. Normal npm/PyPI retries continue to use the original
-release workflow so their OIDC provenance stays tied to the checked source.
 
 For local npm packaging, use `pnpm --filter @ateve/js pack`; publish the resulting
 `ateve-*.tgz` rather than the workspace source manifest, whose name is `@ateve/js`.
