@@ -74,6 +74,28 @@ test("release resolution requires a tag and pins its peeled commit", (t) => {
     "Next",
   );
   const movedCommit = git("rev-parse", "HEAD");
+  const recoveryOutput = path.join(cwd, "recovery-output");
+  const recover = (expectedCommit: string) =>
+    spawnSync(process.execPath, [path.join(root, "tools/codegen/src/release.ts")], {
+      cwd,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GITHUB_SHA: movedCommit,
+        RELEASE_TAG: "v0.2.0",
+        RELEASE_COMMIT: expectedCommit,
+        GITHUB_OUTPUT: recoveryOutput,
+      },
+    });
+  const strict = recover(movedCommit);
+  assert.notEqual(strict.status, 0);
+  assert.match(strict.stderr, /no longer points/);
+  const recovery = recover("");
+  assert.equal(recovery.status, 0, recovery.stderr);
+  assert.equal(
+    readFileSync(recoveryOutput, "utf8"),
+    `ref=${commit}\nrelease_tag=v0.2.0\ndist_tag=latest\n`,
+  );
   git("tag", "--force", "v0.1.0");
   assert.throws(() => resolveReleaseTag("v0.1.0", cwd, commit), /no longer points/);
   assert.equal(resolveReleaseTag("v0.1.0", cwd, movedCommit), movedCommit);
