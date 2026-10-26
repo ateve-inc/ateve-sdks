@@ -55,15 +55,34 @@ def test_request_lists_are_snapshots_and_wire_names_stay_snake_case() -> None:
 def test_request_defaults_and_nested_text_activation() -> None:
     assert SearchRequest(query="q").max_results == 10
     assert ContentOptions().snippet is True
+    assert ContentOptions().highlights is False
     assert ContentOptions().text is None
     assert TextOptions().format == ContentFormat.TEXT
     request = SearchRequest(query="q", content=ContentOptions(text=TextOptions()))
     assert request.model_dump(mode="json", exclude_none=True) == {
         "query": "q",
         "max_results": 10,
-        "content": {"snippet": True, "text": {"format": "text"}},
+        "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
     }
-    assert ContentOptions(snippet=False).model_dump(exclude_none=True) == {"snippet": False}
+    assert ContentOptions(snippet=False).model_dump(exclude_none=True) == {
+        "snippet": False, "highlights": False
+    }
+    assert ContentOptions(highlights=True).highlights is True
+
+
+def test_highlights_are_typed_and_preserve_missing_and_empty_values() -> None:
+    missing = SearchResult()
+    assert missing.highlights is None
+    assert "highlights" not in missing.model_fields_set
+    result = SearchResult(snippet="excerpt", highlights=["Answer support", "Further evidence"])
+    assert result.snippet == "excerpt"
+    assert result.highlights == ["Answer support", "Further evidence"]
+    assert result.model_extra == {}
+    assert SearchResult(highlights=[]).highlights == []
+    with pytest.raises(ValidationError):
+        SearchResult.model_validate({"highlights": "excerpt"})
+    with pytest.raises(ValidationError):
+        SearchResult.model_validate({"highlights": [1]})
 
 
 @pytest.mark.parametrize("value", [0, -1, 101])
@@ -87,7 +106,6 @@ def test_removed_request_fields_and_invalid_text_options_are_rejected() -> None:
             SearchRequest.model_validate({"query": "q", name: value})
     for name, value in [
         ("summary", True),
-        ("highlights", True),
         ("raw_content", True),
         ("max_characters", 100),
         ("format", "text"),
@@ -99,7 +117,10 @@ def test_removed_request_fields_and_invalid_text_options_are_rejected() -> None:
             ContentOptions.model_validate({"text": value})
 
 
-@pytest.mark.parametrize("scenario", ["default", "text", "markdown", "no-snippet"])
+@pytest.mark.parametrize("scenario", [
+    "default", "text", "markdown", "no-snippet",
+    "highlights", "highlights-no-snippet", "highlights-markdown",
+])
 def test_captured_live_responses_preserve_missing_and_null_text(scenario: str) -> None:
     fixture = (
         Path(__file__).resolve().parents[2] / f"contract/fixtures/live-{scenario}-response.json"
@@ -112,8 +133,10 @@ def test_captured_live_responses_preserve_missing_and_null_text(scenario: str) -
     for result, raw in zip(response.results, wire["results"], strict=True):
         assert result.text == raw.get("text")
         assert result.snippet == raw.get("snippet")
+        assert result.highlights == raw.get("highlights")
         assert ("text" in result.model_fields_set) == ("text" in raw)
         assert ("snippet" in result.model_fields_set) == ("snippet" in raw)
+        assert ("highlights" in result.model_fields_set) == ("highlights" in raw)
         assert result.model_extra == {}
     if scenario in {"text", "markdown"}:
         assert response.results[0].text is not None and len(response.results[0].text) == 300

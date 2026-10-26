@@ -23,7 +23,10 @@ export function toWire(request: SearchRequest): Record<string, unknown> {
     wire.locale = locale;
   }
   if (request.content !== undefined) {
-    const content: Record<string, unknown> = { snippet: request.content.snippet ?? true };
+    const content: Record<string, unknown> = {
+      snippet: request.content.snippet ?? true,
+      highlights: request.content.highlights ?? false,
+    };
     if (request.content.text !== undefined) {
       const text: Record<string, unknown> = { format: request.content.text.format ?? "text" };
       assign(text, "max_characters", request.content.text.maxCharacters);

@@ -19,6 +19,7 @@ public final class SearchResult {
     private Instant publishedAt;
     private Double score;
     private String snippet;
+    private List<String> highlights;
     private String text;
     private String favicon;
     private List<ImageItem> images;
@@ -33,6 +34,7 @@ public final class SearchResult {
     public Instant publishedAt() { return publishedAt; }
     public Double score() { return score; }
     public String snippet() { return snippet; }
+    public List<String> highlights() { return highlights == null ? null : Collections.unmodifiableList(highlights); }
     public String text() { return text; }
     public String favicon() { return favicon; }
     public List<ImageItem> images() { return images == null ? null : Collections.unmodifiableList(images); }

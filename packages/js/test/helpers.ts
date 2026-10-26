@@ -1,6 +1,6 @@
 import sharedGoldenResponse from "../../contract/fixtures/golden-response.json";
 
-export const goldenResponse = sharedGoldenResponse;
+export const goldenResponse: typeof sharedGoldenResponse = sharedGoldenResponse;
 
 export function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;

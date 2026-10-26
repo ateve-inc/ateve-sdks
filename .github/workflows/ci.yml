@@ -14,6 +14,10 @@ on:
         description: Release tag to validate and produce publishable artifacts for
         type: string
         default: ""
+    secrets:
+      ATEVE_API_KEY:
+        description: API key for required live contract checks on trusted runs
+        required: false
 
 permissions:
   contents: read
@@ -93,3 +97,26 @@ jobs:
           if-no-files-found: error
           overwrite: true
           retention-days: 7
+
+  live-api:
+    name: Live API contract
+    needs: checks
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate real requests and responses against the shared contract
+        env:
+          ATEVE_API_KEY: ${{ secrets.ATEVE_API_KEY }}
+        run: pnpm --filter @ateve/contract live:check

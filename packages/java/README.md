@@ -172,11 +172,16 @@ or configure `TextOptions.builder().maxCharacters(8000).format(ContentFormat.MAR
 `format` accepts `ContentFormat.TEXT` (default) or `ContentFormat.MARKDOWN`.
 Omitting `text` does not request full text. `maxCharacters` remains a positive
 signed 32-bit integer; its server default is 5000 per result, applied after
-format conversion. `summary` and `highlights` have been removed from
-`ContentOptions`; `favicon` remains optional under `content`.
+format conversion. Use `ContentOptions.builder().highlights(true).build()`
+under `content` to receive query-relevant excerpts in `SearchResult.highlights()`
+(an immutable `List<String>`, or `null` when absent). Highlights default to
+`false` and can coexist with snippets and full text. They focus on evidence that
+directly supports answers, reducing unrelated information compared with snippets.
+`summary` has been removed from `ContentOptions`; `favicon` remains optional
+under `content`.
 
 Both formats return content through `SearchResult.text()`, which is `null`
 when absent or extraction fails. Snippets may coexist with text; use
 `ContentOptions.builder().snippet(false)` to omit them. Obsolete answer, usage,
-news/video, query tuning and raw content/summary/highlights response fields
+news/video, query tuning and raw content/summary response fields
 and models have been removed.

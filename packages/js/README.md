@@ -9,6 +9,11 @@ Official zero-runtime-dependency client for `POST /v1/search`. Requires Node.js
 npm install ateve
 ```
 
+Development uses TypeScript 7 for typechecking. The build enables
+`isolatedDeclarations` so tsdown generates ESM/CommonJS declarations with Oxc
+without requiring the classic TypeScript compiler API. Package checks compile
+consumers against both declaration entry points with TypeScript 7.
+
 ## Use
 
 ```ts
@@ -54,11 +59,14 @@ pass `content: { text: {} }`, or configure
 `format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
 request full text. `maxCharacters` remains a positive signed 32-bit integer;
 its server default is 5000 per result, applied after format conversion.
-`content.summary` and `content.highlights` have been removed; `favicon`
-remains optional under `content`.
+Set `content: { highlights: true }` to receive query-relevant excerpts in
+`results[].highlights` (`string[]`). Highlights default to `false` and can coexist
+with snippets and full text. They focus on evidence that directly supports
+answers, reducing unrelated information compared with snippets.
+`content.summary` has been removed; `favicon` remains optional under `content`.
 
 Both formats return content in `results[].text`. It is omitted when text is
 not requested and `null` when extraction fails. Snippets may coexist with text;
 set `content.snippet: false` to omit them. Responses contain `query.original`,
 `results` and request metadata; answer, usage, news/video, query tuning and
-raw content/summary/highlights response models have been removed.
+raw content/summary response models have been removed.

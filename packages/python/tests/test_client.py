@@ -57,7 +57,8 @@ def test_sync_golden_contract_and_wire_names() -> None:
         date_range="2026-01-01..2026-06-30",
         locale=LocaleSettings(mkt="US", language="en"),
         content=ContentOptions(
-            snippet=False, text=TextOptions(format=ContentFormat.MARKDOWN, max_characters=5000)
+            snippet=False, highlights=True,
+            text=TextOptions(format=ContentFormat.MARKDOWN, max_characters=5000)
         ),
         safe_search=False,
     )
@@ -67,6 +68,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert payload["safe_search"] is False
     assert payload["max_results"] == 20
     assert payload["content"]["snippet"] is False
+    assert payload["content"]["highlights"] is True
     assert not {"limit", "offset", "contents"}.intersection(payload)
     assert payload["content"]["text"]["max_characters"] == 5000
     assert "images" not in payload["content"]
@@ -77,6 +79,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert captured[0].headers["User-Agent"] == f"ateve-python/{__version__}"
     assert response.id == "req_01J9ZK3V6XQ8"
     assert response.results[0].published_at is not None
+    assert response.results[0].highlights == GOLDEN_RESPONSE["results"][0]["highlights"]
     assert response.query.original == "climate policy analysis"
     assert response.total_estimated_matches == 128000
 
@@ -341,7 +344,10 @@ def test_sync_and_async_send_new_defaults_and_nested_text_options() -> None:
             httpx.AsyncClient(transport=httpx.MockTransport(handler)) as transport,
             AsyncAteve("sk_test", http_client=transport) as client,
         ):
-            await client.search("q", max_results=100, content=ContentOptions(snippet=False))
+            response = await client.search(
+                "q", max_results=100, content=ContentOptions(snippet=False, highlights=True)
+            )
+            assert response.results[0].highlights == GOLDEN_RESPONSE["results"][0]["highlights"]
             await client.search(
                 SearchRequest(query="q", content=ContentOptions(text=TextOptions()))
             )
@@ -352,12 +358,12 @@ def test_sync_and_async_send_new_defaults_and_nested_text_options() -> None:
         {
             "query": "q",
             "max_results": 10,
-            "content": {"snippet": True, "text": {"format": "text"}},
+            "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
         },
-        {"query": "q", "max_results": 100, "content": {"snippet": False}},
+        {"query": "q", "max_results": 100, "content": {"snippet": False, "highlights": True}},
         {
             "query": "q",
             "max_results": 10,
-            "content": {"snippet": True, "text": {"format": "text"}},
+            "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
         },
     ]

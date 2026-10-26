@@ -36,6 +36,12 @@ function result(value: unknown): SearchResult {
   assign(parsed, "publishedAt", nullableString(item.published_at));
   assign(parsed, "score", number(item.score));
   assign(parsed, "snippet", string(item.snippet));
+  if (
+    Array.isArray(item.highlights) &&
+    item.highlights.every((value) => typeof value === "string")
+  ) {
+    parsed.highlights = item.highlights;
+  }
   assign(parsed, "text", nullableString(item.text));
   assign(parsed, "favicon", string(item.favicon));
   assign(parsed, "isSafe", nullableBoolean(item.is_safe));

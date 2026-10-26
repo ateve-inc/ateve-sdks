@@ -62,13 +62,17 @@ text, pass `content=ContentOptions(text=TextOptions())`, or configure
 `format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
 request full text. `max_characters` remains a strict positive signed 32-bit
 integer; its server default is 5000 per result, applied after format conversion.
-`summary` and `highlights` have been removed from `ContentOptions`; `favicon`
+Use `content=ContentOptions(highlights=True)` to receive query-relevant excerpts
+in `SearchResult.highlights` (`list[str]`, or `None` when absent). Highlights
+default to `False` and can coexist with snippets and full text. They focus on
+evidence that directly supports answers, reducing unrelated information compared
+with snippets. `summary` has been removed from `ContentOptions`; `favicon`
 remains optional. Both synchronous and asynchronous clients accept `content`
 and `max_results`, or a `SearchRequest` instance.
 
 Both formats return content in `SearchResult.text`. It defaults to `None` when
 absent or when extraction fails; `model_fields_set` distinguishes those cases.
 Snippets may coexist with text; set `ContentOptions(snippet=False)` to omit
-them. Obsolete answer, usage, news/video, query tuning and raw content/summary/
-highlights response fields and models have been removed. Unknown response
+them. Obsolete answer, usage, news/video, query tuning and raw content/summary
+response fields and models have been removed. Unknown response
 fields continue to be retained by Pydantic for forward compatibility.

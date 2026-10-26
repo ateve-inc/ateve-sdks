@@ -26,6 +26,8 @@ export interface TextOptions {
 export interface ContentOptions {
   /** @default true */
   snippet?: boolean;
+  /** Enable query-relevant excerpts that directly support answers, reducing unrelated information compared with snippets. @default false */
+  highlights?: boolean;
   text?: TextOptions;
   favicon?: boolean;
 }
@@ -64,6 +66,8 @@ export interface SearchResult {
   score?: number;
   /** Excerpt returned by default, including alongside text; omitted when content.snippet is false. */
   snippet?: string;
+  /** Query-relevant excerpts that directly support answers, returned alongside snippet when content.highlights is true. */
+  highlights?: string[];
   /** Extracted content when content.text is requested, in the selected text or Markdown format. Null when extraction fails; omitted when text is not requested. */
   text?: string | null;
   favicon?: string;
@@ -77,7 +81,7 @@ export interface SearchResponse {
   latencyMs: number;
   query: QueryInfo;
   results: SearchResult[];
-  /** Estimated matches returned by the server; observed to equal the result count in live probes. */
+  /** Estimated matches returned by the server; may exceed the number of results in this response. */
   totalEstimatedMatches?: number | null;
 }
 

@@ -5,6 +5,9 @@ import defaults from "../../contract/fixtures/live-default-response.json";
 import text from "../../contract/fixtures/live-text-response.json";
 import markdown from "../../contract/fixtures/live-markdown-response.json";
 import noSnippet from "../../contract/fixtures/live-no-snippet-response.json";
+import highlights from "../../contract/fixtures/live-highlights-response.json";
+import highlightsNoSnippet from "../../contract/fixtures/live-highlights-no-snippet-response.json";
+import highlightsMarkdown from "../../contract/fixtures/live-highlights-markdown-response.json";
 
 it("preserves response nulls, defaults and unknown-field handling", async () => {
   const body = {
@@ -85,6 +88,7 @@ it("preserves falsy values while omitting obsolete response fields", async () =>
       {
         score: 0,
         snippet: "",
+        highlights: [],
         text: "",
         isSafe: false,
         images: [{ url: "", width: 0, height: null, alt: "" }],
@@ -95,10 +99,37 @@ it("preserves falsy values while omitting obsolete response fields", async () =>
 });
 
 it.each([
+  ["missing", undefined],
+  ["null", null],
+  ["string", "excerpt"],
+  ["non-string entries", ["excerpt", 1]],
+])(
+  "omits %s highlights instead of returning an invalid string array",
+  async (_name, highlights) => {
+    const client = new Ateve({
+      apiKey: "sk_test",
+      fetch: async () =>
+        new Response(
+          JSON.stringify({
+            ...fixture,
+            results: [{ snippet: "excerpt", highlights }],
+          }),
+        ),
+    });
+    const response = await client.search({ query: "query" });
+    expect(response.results[0]).not.toHaveProperty("highlights");
+    expect(response.results[0]?.snippet).toBe("excerpt");
+  },
+);
+
+it.each([
   ["defaults", defaults],
   ["text", text],
   ["markdown", markdown],
   ["no snippet", noSnippet],
+  ["highlights", highlights],
+  ["highlights without snippets", highlightsNoSnippet],
+  ["highlights with markdown", highlightsMarkdown],
 ])("decodes the captured %s response including omitted and null text", async (_name, body) => {
   const client = new Ateve({
     apiKey: "sk_test",
@@ -111,7 +142,7 @@ it.each([
     const parsed = response.results[index]!;
     expect(parsed.id).toBe(result.id);
     expect(parsed.images).toEqual(result.images);
-    for (const field of ["text", "snippet"] as const) {
+    for (const field of ["text", "snippet", "highlights"] as const) {
       if (field in result)
         expect(parsed).toHaveProperty(field, result[field as keyof typeof result]);
       else expect(parsed).not.toHaveProperty(field);

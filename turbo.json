@@ -49,7 +49,7 @@
       "outputs": []
     },
     "@ateve/codegen#typecheck": {
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/contract/validate-fixtures.ts"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/contract/*.ts"],
       "outputs": []
     },
     "lint": {

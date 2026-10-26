@@ -1,6 +1,6 @@
-import { defineConfig } from "tsdown";
+import type { UserConfig } from "tsdown";
 
-export default defineConfig({
+const config: UserConfig = {
   entry: ["src/index.ts"],
   format: ["esm", "cjs"],
   dts: true,
@@ -15,4 +15,6 @@ export default defineConfig({
     js: format === "es" ? ".mjs" : ".js",
     dts: format === "es" ? ".d.mts" : ".d.ts",
   }),
-});
+};
+
+export default config;

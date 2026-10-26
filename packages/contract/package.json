@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "live:check": "node check-live.ts",
     "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts"
   },
   "devDependencies": {

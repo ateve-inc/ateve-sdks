@@ -14,6 +14,7 @@ import ai.ateve.models.ContentOptions;
 import ai.ateve.models.LocaleSettings;
 import ai.ateve.models.SearchRequest;
 import ai.ateve.models.SearchResponse;
+import ai.ateve.models.SearchResult;
 import ai.ateve.models.TextOptions;
 import ai.ateve.models.UserLocation;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,10 @@ class AteveClientTest {
             assertEquals(Instant.parse("2026-06-12T08:30:00Z"),
                     response.results().get(0).publishedAt());
             assertEquals("The framework introduces...", response.results().get(0).snippet());
+            assertEquals(List.of("The climate framework introduces binding emissions targets.",
+                    "The policy includes annual progress reviews."), response.results().get(0).highlights());
+            assertThrows(UnsupportedOperationException.class,
+                    () -> response.results().get(0).highlights().add("changed"));
         }
     }
 
@@ -109,6 +114,24 @@ class AteveClientTest {
     }
 
     @Test
+    void capturedLiveHighlightsCoexistWithSnippetsAndText() throws Exception {
+        for (String scenario : List.of("highlights", "highlights-no-snippet", "highlights-markdown")) {
+            try (MockApi api = new MockApi()) {
+                api.enqueue(200, Fixtures.liveResponse(scenario));
+                SearchResponse response = client(api).search(minimalRequest());
+                assertEquals(2, response.results().size());
+                assertEquals(125L, response.totalEstimatedMatches());
+                for (SearchResult result : response.results()) {
+                    assertEquals(List.of("Programming Language\n\nPython"), result.highlights());
+                    assertEquals(scenario.equals("highlights-no-snippet"), result.snippet() == null);
+                    if (scenario.equals("highlights-markdown")) assertEquals(300, result.text().length());
+                    else assertNull(result.text());
+                }
+            }
+        }
+    }
+
+    @Test
     void requestSerializesToSnakeCaseAndSendsHeaders() throws Exception {
         try (MockApi api = new MockApi()) {
             api.enqueue(200, Fixtures.GOLDEN_RESPONSE);
@@ -119,7 +142,7 @@ class AteveClientTest {
                     .dateRange("2026-01-01..2026-06-30")
                     .locale(LocaleSettings.builder().mkt("US").language("en").build())
                     .includeDomains(List.of("reuters.com"))
-                    .content(ContentOptions.builder().snippet(false)
+                    .content(ContentOptions.builder().snippet(false).highlights(true)
                             .text(TextOptions.builder().format(ContentFormat.MARKDOWN).maxCharacters(5000).build()).build())
                     .safeSearch(true)
                     .build());
@@ -127,7 +150,7 @@ class AteveClientTest {
             String body = api.receivedBodies.get(0);
             Map<?, ?> payload = Json.read(body.getBytes(StandardCharsets.UTF_8), Map.class);
             assertEquals(20, payload.get("max_results"));
-            assertEquals(Map.of("snippet", false,
+            assertEquals(Map.of("snippet", false, "highlights", true,
                     "text", Map.of("max_characters", 5000, "format", "markdown")), payload.get("content"));
             assertFalse(body.contains("\"limit\""), body);
             assertFalse(body.contains("\"contents\""), body);
@@ -631,6 +654,7 @@ class AteveClientTest {
     void requestDefaultsEnableTextOnlyWhenItsObjectIsProvided() throws Exception {
         assertEquals(10, SearchRequest.builder().query("q").build().maxResults());
         assertEquals(Boolean.TRUE, ContentOptions.builder().build().snippet());
+        assertEquals(Boolean.FALSE, ContentOptions.builder().build().highlights());
         assertNull(ContentOptions.builder().build().text());
         assertEquals(ContentFormat.TEXT, TextOptions.builder().build().format());
         assertEquals(Integer.MAX_VALUE,
@@ -642,8 +666,18 @@ class AteveClientTest {
                             .text(TextOptions.builder().build()).build()).build());
             Map<?, ?> payload = Json.read(api.receivedBodies.get(0).getBytes(StandardCharsets.UTF_8), Map.class);
             assertEquals(Map.of("query", "q", "max_results", 10,
-                    "content", Map.of("snippet", false, "text", Map.of("format", "text"))), payload);
+                    "content", Map.of("snippet", false, "highlights", false,
+                            "text", Map.of("format", "text"))), payload);
         }
+    }
+
+    @Test
+    void highlightsPreserveMissingAndEmptyLists() {
+        SearchResult missing = Json.read("{}".getBytes(StandardCharsets.UTF_8), SearchResult.class);
+        assertNull(missing.highlights());
+        SearchResult empty = Json.read("{\"highlights\":[]}".getBytes(StandardCharsets.UTF_8), SearchResult.class);
+        assertEquals(List.of(), empty.highlights());
+        assertThrows(UnsupportedOperationException.class, () -> empty.highlights().add("changed"));
     }
 
     @Test

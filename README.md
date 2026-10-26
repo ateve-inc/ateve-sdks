@@ -71,18 +71,29 @@ Python and Java source formatting remains outside oxfmt's scope.
 
 JS lint runs oxlint over SDK sources, tests and build configuration, with correctness
 rules enforced and warnings rejected. Typechecking remains a separate `tsc --noEmit`
-task. Python lint/typecheck run Ruff/mypy; Java runs Maven `validate`/`test-compile`.
+task using TypeScript 7. The JS SDK enables `isolatedDeclarations` so tsdown uses
+Oxc to generate ESM/CommonJS declarations without the classic TypeScript API.
+Package checks compile consumers against both declaration entry points.
+Python lint/typecheck run Ruff/mypy; Java runs Maven `validate`/`test-compile`.
 Tooling lint checks Node script syntax, and tooling typecheck checks strict TypeScript.
 
 ## Shared API models
 
 [`packages/contract/`](packages/contract/) contains the OpenAPI 3.1 contract,
 bindings and fixtures. Requests use `max_results` (1–100, default 10) and
-`content`, with optional `snippet` (default true) and nested `text` options.
+`content`, with optional `snippet` (default true), `highlights` (default false)
+and nested `text` options. Enable `content.highlights` to receive query-relevant
+excerpts in `results[].highlights` (`string[]`), alongside the existing snippet.
+These excerpts focus on evidence that directly supports answers, reducing
+unrelated information compared with snippets.
 Responses were verified against live requests on October 9, 2026. Both text
 formats use the nullable `results[].text` field; obsolete response fields and
 unused nested models have been removed. Captured response fixtures cover
-default excerpts, plain text, Markdown and disabled snippets.
+default excerpts, plain text, Markdown and disabled snippets. Highlights were
+verified against the live API on October 26, 2026 using JS ESM/CJS, Python
+sync/async and Java sync/async clients. Captured fixtures cover highlights with
+snippets, without snippets and alongside Markdown text. Default and explicitly
+disabled highlights were also verified to be omitted from the response.
 
 [`tools/codegen/`](tools/codegen/) generates TS interfaces, Python Pydantic
 models and Java Builder/response classes. Generated files are committed:
@@ -104,6 +115,27 @@ modified tracked files. Verify packaged code locally after `pnpm build`:
 ```bash
 node tools/codegen/src/check-artifacts.ts
 ```
+
+CI also runs a single **Live API contract** job after the SDK compatibility
+matrix succeeds. Configure the repository Actions secret `ATEVE_API_KEY`;
+it is injected only into the live-check step, and the release workflow forwards
+it explicitly to the reusable CI workflow. Missing credentials on a trusted run,
+HTTP failures, contract mismatches or content-option regressions fail CI and
+block release publishing. Fork and Dependabot PRs skip this secret-dependent job.
+
+Run the same check locally with `ATEVE_API_KEY` supplied through the environment:
+
+```bash
+pnpm --filter @ateve/contract live:check
+```
+
+It sends seven sequential requests to `https://api.ateve.ai/v1/search`, with
+two results per request and no retries. Each request and raw response is
+validated against the shared OpenAPI contract before checking content defaults,
+highlights, disabled snippets and plain/Markdown text. These are real, billable
+searches. Keys and response bodies are not logged or saved by the check. The
+ordinary `pnpm check` remains offline and tests the live-check failure paths
+with an injected transport.
 
 All SDKs share release versions and `v*` tags. Use the root command to update
 SDK manifests, private workspace manifests, client constants, contract

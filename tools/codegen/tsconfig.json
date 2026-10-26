@@ -10,5 +10,5 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../../packages/contract/validate-fixtures.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "../../packages/contract/*.ts"]
 }

@@ -88,6 +88,7 @@ class TextOptions(RequestModel):
 
 class ContentOptions(RequestModel):
     snippet: Optional[bool] = Field(default=True)
+    highlights: Optional[bool] = Field(default=False)
     text: Optional[TextOptions] = None
     favicon: Optional[bool] = None
 
@@ -144,6 +145,7 @@ class SearchResult(ResponseModel):
     published_at: Optional[datetime] = None
     score: Optional[float] = None
     snippet: Optional[str] = None
+    highlights: Optional[List[str]] = None
     text: Optional[str] = None
     favicon: Optional[str] = None
     images: List[ImageItem] = Field(default_factory=list)

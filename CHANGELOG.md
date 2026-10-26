@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- Add a required live API contract check to trusted CI and release runs, using
+  the `ATEVE_API_KEY` GitHub Actions secret. Reuse the fixture validator for raw
+  requests/responses and check content combinations without retries or saved keys.
+- Support TypeScript 7 builds by enabling isolated declarations and Oxc declaration
+  generation. Verify both published ESM/CommonJS declaration entry points with
+  TypeScript 7 consumers.
+- Add `content.highlights` (boolean, default `false`) to all three SDKs and the
+  shared API contract. Set it to `true` to request query-relevant excerpts that
+  directly support answers and reduce unrelated information compared with snippets.
+- Expose per-result `highlights` as a string array alongside the existing snippet,
+  preserving missing and empty values according to each SDK's model conventions.
+- Verify highlights against the live API through JS ESM/CJS, Python sync/async
+  and Java sync/async clients. Add captured response fixtures for combinations
+  with snippets and Markdown text; clarify that estimated matches may exceed
+  the returned result count.
+
 ## 0.2.0 — 2026-10-09
 
 This release aligns JavaScript, Python and Java with the live Search API,

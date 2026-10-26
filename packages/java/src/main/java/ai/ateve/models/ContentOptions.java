@@ -7,11 +7,13 @@ package ai.ateve.models;
 public final class ContentOptions {
 
     private final Boolean snippet;
+    private final Boolean highlights;
     private final TextOptions text;
     private final Boolean favicon;
 
     private ContentOptions(Builder b) {
         this.snippet = b.snippet;
+        this.highlights = b.highlights;
         this.text = b.text;
         this.favicon = b.favicon;
     }
@@ -19,15 +21,18 @@ public final class ContentOptions {
     public static Builder builder() { return new Builder(); }
 
     public Boolean snippet() { return snippet; }
+    public Boolean highlights() { return highlights; }
     public TextOptions text() { return text; }
     public Boolean favicon() { return favicon; }
 
     public static final class Builder {
         private Boolean snippet = true;
+        private Boolean highlights = false;
         private TextOptions text;
         private Boolean favicon;
 
         public Builder snippet(Boolean snippet) { this.snippet = snippet; return this; }
+        public Builder highlights(Boolean highlights) { this.highlights = highlights; return this; }
         public Builder text(TextOptions text) { this.text = text; return this; }
         public Builder favicon(Boolean favicon) { this.favicon = favicon; return this; }
 

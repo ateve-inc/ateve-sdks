@@ -1,0 +1,75 @@
+{
+  "id": "req_live_highlights_markdown",
+  "created": 1793001728,
+  "latency_ms": 565,
+  "query": {
+    "original": "Python programming language"
+  },
+  "results": [
+    {
+      "id": "results.#0",
+      "title": "pyOffice download for Linux",
+      "url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "display_url": "https://www.onworks.net/software/linux/app-pyoffice",
+      "published_at": "2026-08-14T21:08:12.000Z",
+      "score": 0.8097166302,
+      "snippet": "Programming Language\n\nPython",
+      "text": "# pyOffice download for Linux\n\nThis is the Linux app named pyOffice whose latest release can be downloaded as XRSSfeedforfil. It can be run online in the free hosting provider OnWorks for workstations.\n\nDownload and run online this app named pyOffice with OnWorks for free.\n\nFollow these instructions",
+      "highlights": ["Programming Language\n\nPython"],
+      "images": [
+        {
+          "url": "https://gtranslate.net/flags/blank.png",
+          "width": 32,
+          "height": 32,
+          "alt": "English"
+        },
+        {
+          "url": "https://www.onworks.net/images/onworkslogofavicon.ico",
+          "width": 1,
+          "height": 1,
+          "alt": "OnWorks favicon"
+        },
+        {
+          "url": "https://www.onworks.net/imagescropped/defaulticon.png_3.webp",
+          "width": 50,
+          "height": 50,
+          "alt": "Free download pyOffice Linux app to run online in Ubuntu online, Fedora online or Debian online"
+        }
+      ],
+      "is_safe": true
+    },
+    {
+      "id": "results.#1",
+      "title": "Plugins Quickstart download for Linux",
+      "url": "https://www.onworks.net/software/linux/app-plugins-quickstart",
+      "display_url": "https://www.onworks.net/software/linux/app-plugins-quickstart",
+      "published_at": "2026-08-18T05:42:49.000Z",
+      "score": 0.7365243139,
+      "snippet": "Programming Language\n\nPython",
+      "text": "# Plugins Quickstart download for Linux\n\nThis is the Linux app named Plugins Quickstart whose latest release can be downloaded as plugins-quickstartsourcecode.zip. It can be run online in the free hosting provider OnWorks for workstations.\n\nDownload and run online this app named Plugins Quickstart w",
+      "highlights": ["Programming Language\n\nPython"],
+      "images": [
+        {
+          "url": "https://gtranslate.net/flags/blank.png",
+          "width": 32,
+          "height": 32,
+          "alt": "English"
+        },
+        {
+          "url": "https://www.onworks.net/images/onworkslogofavicon.ico",
+          "width": 1,
+          "height": 1,
+          "alt": "OnWorks favicon"
+        },
+        {
+          "url": "https://www.onworks.net/imagescropped/defaulticon.png_3.webp",
+          "width": 50,
+          "height": 50,
+          "alt": "Free download Plugins Quickstart Linux app to run online in Ubuntu online, Fedora online or Debian online"
+        }
+      ],
+      "is_safe": true
+    }
+  ],
+  "total_estimated_matches": 125
+}

@@ -32,7 +32,11 @@ describe("Ateve JavaScript SDK", () => {
       maxResults: 20,
       dateRange: "2026-01-01..2026-06-30",
       locale: { mkt: "US", language: "en" },
-      content: { snippet: false, text: { format: "markdown", maxCharacters: 5000 } },
+      content: {
+        snippet: false,
+        highlights: true,
+        text: { format: "markdown", maxCharacters: 5000 },
+      },
       safeSearch: false,
     });
 
@@ -43,6 +47,7 @@ describe("Ateve JavaScript SDK", () => {
     expect(wire.max_results).toBe(20);
     expect(wire.content).toEqual({
       snippet: false,
+      highlights: true,
       text: { format: "markdown", max_characters: 5000 },
     });
     for (const name of ["limit", "offset", "contents"]) expect(wire).not.toHaveProperty(name);
@@ -54,6 +59,10 @@ describe("Ateve JavaScript SDK", () => {
     expect(capturedInit?.redirect).toBe("manual");
     expect(response.latencyMs).toBe(412);
     expect(response.results[0]?.displayUrl).toBe("https://reuters.com/article/abc");
+    expect(response.results[0]?.highlights).toEqual([
+      "The climate framework introduces binding emissions targets.",
+      "The policy includes annual progress reviews.",
+    ]);
     expect(response.query.original).toBe("climate policy analysis");
     expect(response.totalEstimatedMatches).toBe(128000);
   });
@@ -104,10 +113,16 @@ describe("Ateve JavaScript SDK", () => {
     await client.search({ query: "q" });
     await client.search({ query: "q", content: {} });
     await client.search({ query: "q", maxResults: 1, content: { snippet: false, text: {} } });
+    await client.search({ query: "q", content: { highlights: false } });
     expect(bodies).toEqual([
       { query: "q", max_results: 10 },
-      { query: "q", max_results: 10, content: { snippet: true } },
-      { query: "q", max_results: 1, content: { snippet: false, text: { format: "text" } } },
+      { query: "q", max_results: 10, content: { snippet: true, highlights: false } },
+      {
+        query: "q",
+        max_results: 1,
+        content: { snippet: false, highlights: false, text: { format: "text" } },
+      },
+      { query: "q", max_results: 10, content: { snippet: true, highlights: false } },
     ]);
   });
 

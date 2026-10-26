@@ -10,6 +10,7 @@
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
     "declaration": true,
+    "isolatedDeclarations": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,

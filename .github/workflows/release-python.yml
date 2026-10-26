@@ -59,6 +59,9 @@ jobs:
       ref: ${{ needs.release.outputs.ref }}
       release_tag: ${{ needs.release.outputs.release_tag }}
 
+    secrets:
+      ATEVE_API_KEY: ${{ secrets.ATEVE_API_KEY }}
+
   publish-js:
     needs: [release, checks]
     if: github.event_name == 'push' || inputs.sdk == 'all' || inputs.sdk == 'js'

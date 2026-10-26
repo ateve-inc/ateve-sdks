@@ -3,7 +3,7 @@
   "info": {
     "title": "Ateve Search API — SDK contract",
     "version": "0.2.0",
-    "description": "Search request and response models aligned with live API probes on October 9, 2026. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
+    "description": "Search request and response models aligned with live API probes on October 9, 2026 and the October 26, 2026 highlights update. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
   },
   "servers": [
     {
@@ -95,6 +95,11 @@
           "snippet": {
             "type": "boolean",
             "default": true
+          },
+          "highlights": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable query-relevant excerpts that directly support answers, reducing unrelated information compared with snippets."
           },
           "text": {
             "$ref": "#/components/schemas/TextOptions"
@@ -214,6 +219,13 @@
             "type": "string",
             "description": "Excerpt returned by default, including alongside text; omitted when content.snippet is false."
           },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Query-relevant excerpts that directly support answers, returned alongside snippet when content.highlights is true."
+          },
           "text": {
             "type": ["string", "null"],
             "description": "Extracted content when content.text is requested, in the selected text or Markdown format. Null when extraction fails; omitted when text is not requested."
@@ -261,7 +273,7 @@
           "total_estimated_matches": {
             "type": ["integer", "null"],
             "format": "int64",
-            "description": "Estimated matches returned by the server; observed to equal the result count in live probes."
+            "description": "Estimated matches returned by the server; may exceed the number of results in this response."
           }
         },
         "additionalProperties": true,

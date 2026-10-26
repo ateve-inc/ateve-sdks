@@ -3,6 +3,7 @@
   "max_results": 20,
   "content": {
     "snippet": false,
+    "highlights": true,
     "text": {
       "max_characters": 5000,
       "format": "markdown"
