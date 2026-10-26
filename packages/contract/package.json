@@ -7,8 +7,8 @@
     "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.0.0",
-    "ajv": "^8.17.1",
+    "@redocly/cli": "^2.71.0",
+    "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1"
   }
 }

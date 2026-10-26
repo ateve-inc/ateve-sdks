@@ -17,13 +17,13 @@
     "locks:check": "uv lock --check"
   },
   "devDependencies": {
-    "oxfmt": "^0.72.0",
-    "turbo": "^2.11.7"
+    "oxfmt": "^0.74.0",
+    "turbo": "^2.11.10"
   },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "12.10.1",
+      "version": ">=12.0.0 <13.0.0",
       "onFail": "error"
     }
   },
