@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-10-26
 
 - Add a required live API contract check to trusted CI and release runs, using
   the `ATEVE_API_KEY` GitHub Actions secret. Reuse the fixture validator for raw

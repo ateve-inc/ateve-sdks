@@ -6,7 +6,7 @@ import { createTransport } from "./internal/transport";
 import { toWire } from "./internal/serialization";
 import { validateRequest } from "./internal/validation";
 
-export const VERSION = "0.2.0";
+export const VERSION = "0.2.1";
 export const DEFAULT_BASE_URL = "https://api.ateve.ai";
 export const DEFAULT_TIMEOUT_MS = 60_000;
 export const DEFAULT_MAX_RESPONSE_BYTES: number = 32 * 1024 * 1024;

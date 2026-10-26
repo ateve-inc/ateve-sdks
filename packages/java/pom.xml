@@ -6,7 +6,7 @@
 
     <groupId>ai.ateve</groupId>
     <artifactId>ateve-java</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <packaging>jar</packaging>
 
     <name>Ateve Java SDK</name>
