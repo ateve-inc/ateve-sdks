@@ -142,7 +142,7 @@ class AteveClientTest {
                     .dateRange("2026-01-01..2026-06-30")
                     .locale(LocaleSettings.builder().mkt("US").language("en").build())
                     .includeDomains(List.of("reuters.com"))
-                    .content(ContentOptions.builder().snippet(false).highlights(true)
+                    .content(ContentOptions.builder().highlights(true)
                             .text(TextOptions.builder().format(ContentFormat.MARKDOWN).maxCharacters(5000).build()).build())
                     .safeSearch(true)
                     .build());
@@ -150,7 +150,7 @@ class AteveClientTest {
             String body = api.receivedBodies.get(0);
             Map<?, ?> payload = Json.read(body.getBytes(StandardCharsets.UTF_8), Map.class);
             assertEquals(20, payload.get("max_results"));
-            assertEquals(Map.of("snippet", false, "highlights", true,
+            assertEquals(Map.of("highlights", true,
                     "text", Map.of("max_characters", 5000, "format", "markdown")), payload.get("content"));
             assertFalse(body.contains("\"limit\""), body);
             assertFalse(body.contains("\"contents\""), body);
@@ -653,7 +653,6 @@ class AteveClientTest {
     @Test
     void requestDefaultsEnableTextOnlyWhenItsObjectIsProvided() throws Exception {
         assertEquals(10, SearchRequest.builder().query("q").build().maxResults());
-        assertEquals(Boolean.TRUE, ContentOptions.builder().build().snippet());
         assertEquals(Boolean.FALSE, ContentOptions.builder().build().highlights());
         assertNull(ContentOptions.builder().build().text());
         assertEquals(ContentFormat.TEXT, TextOptions.builder().build().format());
@@ -662,11 +661,10 @@ class AteveClientTest {
         try (MockApi api = new MockApi()) {
             api.enqueue(200, Fixtures.GOLDEN_RESPONSE);
             client(api).search(SearchRequest.builder().query("q")
-                    .content(ContentOptions.builder().snippet(false)
-                            .text(TextOptions.builder().build()).build()).build());
+                    .content(ContentOptions.builder().text(TextOptions.builder().build()).build()).build());
             Map<?, ?> payload = Json.read(api.receivedBodies.get(0).getBytes(StandardCharsets.UTF_8), Map.class);
             assertEquals(Map.of("query", "q", "max_results", 10,
-                    "content", Map.of("snippet", false, "highlights", false,
+                    "content", Map.of("highlights", false,
                             "text", Map.of("format", "text"))), payload);
         }
     }

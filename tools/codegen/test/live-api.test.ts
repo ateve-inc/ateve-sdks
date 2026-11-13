@@ -16,7 +16,6 @@ function responseFor(init?: RequestInit): Record<string, unknown> {
   const response = structuredClone(fixture);
   for (const result of response.results) {
     if (request.content?.highlights !== true) delete result.highlights;
-    if (request.content?.snippet === false) delete result.snippet;
     if (request.content?.text) result.text = "Extracted text";
   }
   return response;
@@ -38,8 +37,8 @@ test("live probes validate every request and raw response without credentials or
     },
     (message) => messages.push(message),
   );
-  assert.equal(requests.length, 7);
-  assert.equal(messages.length, 7);
+  assert.equal(requests.length, 6);
+  assert.equal(messages.length, 6);
   assert.ok(messages.every((message) => message.includes("match the contract")));
   assert.ok(!messages.join("\n").includes("test-secret"));
 });
@@ -73,14 +72,12 @@ test("shared contract validation rejects invalid raw responses before normalizat
       /SearchResponse:/,
     );
   }
-  assert.throws(
-    () =>
-      validateAgainstContract("SearchRequest", {
-        query: "q",
-        content: { highlights: "true" },
-      }),
-    /SearchRequest:/,
-  );
+  for (const content of [{ highlights: "true" }, { snippet: false }]) {
+    assert.throws(
+      () => validateAgainstContract("SearchRequest", { query: "q", content }),
+      /SearchRequest:/,
+    );
+  }
 });
 
 test("live checks reject vacuous successes and missing enabled highlights", async () => {
@@ -104,5 +101,22 @@ test("live checks reject vacuous successes and missing enabled highlights", asyn
   await assert.rejects(
     checkLiveApi("test-secret", async () => Response.json(fixture)),
     /default: unexpected highlights/,
+  );
+});
+
+test("live checks require snippets alongside highlights and text", async () => {
+  await assert.rejects(
+    checkLiveApi(
+      "test-secret",
+      async (_input, init) => {
+        const response = responseFor(init);
+        if (JSON.parse(String(init?.body)).content?.text?.format === "markdown") {
+          for (const result of response.results as Record<string, unknown>[]) delete result.snippet;
+        }
+        return Response.json(response);
+      },
+      () => {},
+    ),
+    /highlights-markdown: missing snippet/,
   );
 });

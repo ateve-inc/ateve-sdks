@@ -33,7 +33,6 @@ describe("Ateve JavaScript SDK", () => {
       dateRange: "2026-01-01..2026-06-30",
       locale: { mkt: "US", language: "en" },
       content: {
-        snippet: false,
         highlights: true,
         text: { format: "markdown", maxCharacters: 5000 },
       },
@@ -46,7 +45,6 @@ describe("Ateve JavaScript SDK", () => {
     expect(wire.safe_search).toBe(false);
     expect(wire.max_results).toBe(20);
     expect(wire.content).toEqual({
-      snippet: false,
       highlights: true,
       text: { format: "markdown", max_characters: 5000 },
     });
@@ -112,17 +110,17 @@ describe("Ateve JavaScript SDK", () => {
     });
     await client.search({ query: "q" });
     await client.search({ query: "q", content: {} });
-    await client.search({ query: "q", maxResults: 1, content: { snippet: false, text: {} } });
+    await client.search({ query: "q", maxResults: 1, content: { text: {} } });
     await client.search({ query: "q", content: { highlights: false } });
     expect(bodies).toEqual([
       { query: "q", max_results: 10 },
-      { query: "q", max_results: 10, content: { snippet: true, highlights: false } },
+      { query: "q", max_results: 10, content: { highlights: false } },
       {
         query: "q",
         max_results: 1,
-        content: { snippet: false, highlights: false, text: { format: "text" } },
+        content: { highlights: false, text: { format: "text" } },
       },
-      { query: "q", max_results: 10, content: { snippet: true, highlights: false } },
+      { query: "q", max_results: 10, content: { highlights: false } },
     ]);
   });
 

@@ -1,43 +1,31 @@
 # SDK API contract
 
-`openapi.json` is an OpenAPI 3.1.0 document. Request models reflect the October
-2026 update: `max_results` replaces `limit`/`offset`, and the API uses `content`
-(singular). `content.snippet` defaults to true. Full text is requested through
-the optional `content.text` object; its `format` defaults to `text`, and
-`max_characters` lives inside that object. The October 26, 2026 update adds
-`content.highlights` (boolean, default false). Setting it to true enables
-query-relevant excerpts that directly support answers and reduce unrelated
-information compared with snippets. The summary option remains removed.
+`openapi.json` is an OpenAPI 3.1.0 document. Requests use `max_results` and
+`content`. Request full text through the optional `content.text` object.
+Its `format` defaults to `text`, and `max_characters` limits the length per
+result after format conversion. Set `content.highlights` to true to request
+concise, query-relevant excerpts. Highlights are disabled by default.
 
-Success response models were verified against live requests on October 9, 2026.
 The response contains `id`, `created`, `latency_ms`, `query.original`, `results`,
-and optional `total_estimated_matches`. Per-result extracted content is returned
-as `text` for both formats. Extraction failure produces `text: null`; without
-a text request, the field is omitted. Snippets may coexist with text and are
-omitted when `content.snippet` is false. When `content.highlights` is true,
-each result can also contain `highlights` (`string[]`) alongside `snippet`.
-Live requests on October 26, 2026 verified highlights using JS ESM/CJS,
-Python sync/async and Java sync/async clients. The `live-highlights*` fixtures
-capture highlights with snippets, without snippets and alongside Markdown text.
-Default and explicitly disabled highlights were omitted from the live responses.
-The new probes returned `total_estimated_matches: 125` for two results, so the
-estimate can exceed the returned count. The obsolete answer, usage, news/video,
-query tuning, raw_content, summary, site_name and language fields
-and unused nested models have been removed.
+and optional `total_estimated_matches`, which can exceed the returned count.
+Each result includes `snippet`. When requested, `highlights` (`string[]`) and
+extracted `text` can appear alongside it. Both text formats use the same
+`text` field. Extraction failure produces `text: null`. The API omits `text`
+when the request omits `content.text`. The obsolete answer, usage, news/video,
+query tuning, `raw_content`, `summary`, `site_name` and `language` fields and
+unused nested models have been removed.
 
-The `live-*-response.json` fixtures capture these observed shapes with synthetic
-request IDs. A permission-error fixture records the observed `team_not_allowed`
-envelope. No API keys are stored. The local documentation repository currently
-describes a separate `markdown` response field and snippet replacement; live
-responses use `text` and preserve snippets, so this contract follows live behavior.
-This private workspace is not published and is not an SDK runtime dependency.
+The `live-*-response.json` fixtures capture response shapes with synthetic
+request IDs. Historical fixtures without snippets cover compatibility with
+older responses. A permission-error fixture records the observed
+`team_not_allowed` envelope. This private workspace is used at build time.
 
 `validation.ts` supplies the same OpenAPI-backed validator to fixture checks and
 `pnpm --filter @ateve/contract live:check`. The live check requires `ATEVE_API_KEY`
 and validates requests plus raw successful responses before checking content
-behavior. It uses seven real searches, no retries and no response normalization;
-no key or response body is written to disk. CI runs it once outside the language
-matrix and injects the Actions secret only into that step.
+behavior. It uses six real searches with no retries or response normalization.
+The check writes neither keys nor response bodies to disk. CI runs it once
+outside the language matrix and injects the Actions secret only into that step.
 
 ## Changing a model
 

@@ -24,9 +24,7 @@ export interface TextOptions {
 }
 
 export interface ContentOptions {
-  /** @default true */
-  snippet?: boolean;
-  /** Enable query-relevant excerpts that directly support answers, reducing unrelated information compared with snippets. @default false */
+  /** Request concise, query-relevant excerpts in addition to snippets. @default false */
   highlights?: boolean;
   text?: TextOptions;
   favicon?: boolean;
@@ -64,9 +62,9 @@ export interface SearchResult {
   displayUrl?: string;
   publishedAt?: string | null;
   score?: number;
-  /** Excerpt returned by default, including alongside text; omitted when content.snippet is false. */
+  /** Excerpt returned with every result, including when highlights or full text are requested. */
   snippet?: string;
-  /** Query-relevant excerpts that directly support answers, returned alongside snippet when content.highlights is true. */
+  /** Concise, query-relevant excerpts returned alongside the snippet when content.highlights is true. */
   highlights?: string[];
   /** Extracted content when content.text is requested, in the selected text or Markdown format. Null when extraction fails; omitted when text is not requested. */
   text?: string | null;

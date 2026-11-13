@@ -67,7 +67,7 @@ test("new models are generated and exported without a duplicated model registry"
 test("primitive and referenced enum defaults propagate and remain optional", () => {
   const [api, bindings] = loadContract();
   api.components.schemas.SearchRequest.properties!.max_results.default = 25;
-  api.components.schemas.ContentOptions.properties!.snippet.default = false;
+  api.components.schemas.ContentOptions.properties!.highlights.default = true;
   api.components.schemas.TextOptions.properties!.format.default = "markdown";
   const generated = render(api, bindings);
   assert.match(generated.js["src/types.ts"], /@default 25.*\n  maxResults\?: number/);
@@ -77,7 +77,7 @@ test("primitive and referenced enum defaults propagate and remain optional", () 
   );
   assert.match(
     generated.python["src/ateve/models.py"],
-    /snippet: Optional\[bool\] = Field\(default=False\)/,
+    /highlights: Optional\[bool\] = Field\(default=True\)/,
   );
   assert.match(
     generated.python["src/ateve/models.py"],
@@ -89,7 +89,7 @@ test("primitive and referenced enum defaults propagate and remain optional", () 
   );
   assert.match(
     generated.java["src/main/java/ai/ateve/models/ContentOptions.java"],
-    /Boolean snippet = false/,
+    /Boolean highlights = true/,
   );
   assert.match(
     generated.java["src/main/java/ai/ateve/models/TextOptions.java"],
@@ -103,7 +103,7 @@ test("unsupported, mistyped and out-of-range defaults fail explicitly", () => {
     ["SearchRequest", "max_results", 101],
     ["SearchRequest", "max_results", 1.5],
     ["SearchRequest", "max_results", "10"],
-    ["ContentOptions", "snippet", "true"],
+    ["ContentOptions", "highlights", "true"],
     ["ContentOptions", "text", {}],
     ["TextOptions", "format", "html"],
   ];

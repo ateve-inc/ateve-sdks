@@ -87,7 +87,6 @@ class TextOptions(RequestModel):
 
 
 class ContentOptions(RequestModel):
-    snippet: Optional[bool] = Field(default=True)
     highlights: Optional[bool] = Field(default=False)
     text: Optional[TextOptions] = None
     favicon: Optional[bool] = None

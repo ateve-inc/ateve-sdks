@@ -6,7 +6,6 @@ const scenarios: { name: string; content?: Record<string, unknown> }[] = [
   { name: "content-defaults", content: {} },
   { name: "highlights-disabled", content: { highlights: false } },
   { name: "highlights-enabled", content: { highlights: true } },
-  { name: "highlights-no-snippet", content: { highlights: true, snippet: false } },
   {
     name: "highlights-text",
     content: { highlights: true, text: { format: "text", max_characters: 300 } },
@@ -77,9 +76,7 @@ export async function checkLiveApi(
       if (scenario.content?.highlights === true)
         assert.ok(Array.isArray(result.highlights), `${scenario.name}: missing highlights`);
       else assert.ok(!("highlights" in result), `${scenario.name}: unexpected highlights`);
-      if (scenario.content?.snippet === false)
-        assert.ok(!("snippet" in result), `${scenario.name}: unexpected snippet`);
-      else assert.equal(typeof result.snippet, "string", `${scenario.name}: missing snippet`);
+      assert.equal(typeof result.snippet, "string", `${scenario.name}: missing snippet`);
       if (scenario.content?.text) {
         assert.ok("text" in result, `${scenario.name}: missing text`);
         if (typeof result.text === "string")

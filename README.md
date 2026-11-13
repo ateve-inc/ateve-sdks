@@ -81,19 +81,12 @@ Tooling lint checks Node script syntax, and tooling typecheck checks strict Type
 
 [`packages/contract/`](packages/contract/) contains the OpenAPI 3.1 contract,
 bindings and fixtures. Requests use `max_results` (1–100, default 10) and
-`content`, with optional `snippet` (default true), `highlights` (default false)
-and nested `text` options. Enable `content.highlights` to receive query-relevant
-excerpts in `results[].highlights` (`string[]`), alongside the existing snippet.
-These excerpts focus on evidence that directly supports answers, reducing
-unrelated information compared with snippets.
-Responses were verified against live requests on October 9, 2026. Both text
-formats use the nullable `results[].text` field; obsolete response fields and
-unused nested models have been removed. Captured response fixtures cover
-default excerpts, plain text, Markdown and disabled snippets. Highlights were
-verified against the live API on October 26, 2026 using JS ESM/CJS, Python
-sync/async and Java sync/async clients. Captured fixtures cover highlights with
-snippets, without snippets and alongside Markdown text. Default and explicitly
-disabled highlights were also verified to be omitted from the response.
+`content`, with optional `highlights` (default false), nested `text` options,
+and optional `favicon`. Snippets are always returned. Enable
+`content.highlights` to receive concise, query-relevant excerpts in
+`results[].highlights` (`string[]`). Both text formats use the nullable
+`results[].text` field. Captured fixtures cover default responses, plain text,
+Markdown and highlights, including highlights alongside Markdown text.
 
 [`tools/codegen/`](tools/codegen/) generates TS interfaces, Python Pydantic
 models and Java Builder/response classes. Generated files are committed:
@@ -129,10 +122,10 @@ Run the same check locally with `ATEVE_API_KEY` supplied through the environment
 pnpm --filter @ateve/contract live:check
 ```
 
-It sends seven sequential requests to `https://api.ateve.ai/v1/search`, with
+It sends six sequential requests to `https://api.ateve.ai/v1/search`, with
 two results per request and no retries. Each request and raw response is
 validated against the shared OpenAPI contract before checking content defaults,
-highlights, disabled snippets and plain/Markdown text. These are real, billable
+snippets, highlights and plain/Markdown text. These are real, billable
 searches. Keys and response bodies are not logged or saved by the check. The
 ordinary `pnpm check` remains offline and tests the live-check failure paths
 with an injected transport.

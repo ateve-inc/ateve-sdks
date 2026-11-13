@@ -55,24 +55,32 @@ decisions remain caller-owned.
 
 ## Search contract limits
 
-Use `max_results` (1–100, default 10); `limit` and `offset` have been removed.
-`ContentOptions.snippet` is optional and defaults to `True`. To retrieve full
-text, pass `content=ContentOptions(text=TextOptions())`, or configure
-`TextOptions(max_characters=8000, format=ContentFormat.MARKDOWN)`.
-`format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
-request full text. `max_characters` remains a strict positive signed 32-bit
-integer; its server default is 5000 per result, applied after format conversion.
-Use `content=ContentOptions(highlights=True)` to receive query-relevant excerpts
-in `SearchResult.highlights` (`list[str]`, or `None` when absent). Highlights
-default to `False` and can coexist with snippets and full text. They focus on
-evidence that directly supports answers, reducing unrelated information compared
-with snippets. `summary` has been removed from `ContentOptions`; `favicon`
-remains optional. Both synchronous and asynchronous clients accept `content`
-and `max_results`, or a `SearchRequest` instance.
+Use `max_results` to set the maximum number of results (1–100, default 10).
+`limit` and `offset` have been removed. Both synchronous and asynchronous
+clients accept `content` and `max_results`, or a `SearchRequest` instance.
 
-Both formats return content in `SearchResult.text`. It defaults to `None` when
-absent or when extraction fails; `model_fields_set` distinguishes those cases.
-Snippets may coexist with text; set `ContentOptions(snippet=False)` to omit
-them. Obsolete answer, usage, news/video, query tuning and raw content/summary
-response fields and models have been removed. Unknown response
-fields continue to be retained by Pydantic for forward compatibility.
+Snippets are always returned and cannot be disabled. To request full text, pass
+`content=ContentOptions(text=TextOptions())`. To customize the output, use
+`TextOptions(max_characters=8000, format=ContentFormat.MARKDOWN)`.
+`format` accepts `ContentFormat.TEXT` (default) or `ContentFormat.MARKDOWN`.
+Full text is requested only when `text` is supplied. `max_characters` must be a
+strict positive signed 32-bit integer. The server default is 5,000 characters
+per result, applied after format conversion. Both formats return content in
+`SearchResult.text`, which is `None` when absent or when extraction fails.
+`model_fields_set` distinguishes those cases. Full text is returned alongside
+snippets.
+
+Highlights are optional and disabled by default. Set
+`content=ContentOptions(highlights=True)` to return concise, query-relevant
+excerpts in addition to snippets. `SearchResult.highlights` is a `list[str]`, or
+`None` when the field is absent. Highlights can coexist with snippets and full text.
+
+For token-efficient workflows, your agent can prioritize highlights when building
+model context and supplement them with snippets when additional context is needed.
+When the API returns both fields, token savings depend on which content your
+agent passes to the model.
+
+`summary` and the snippet toggle have been removed from `ContentOptions`.
+`favicon` remains optional under `content`. Obsolete answer, usage, news/video,
+query tuning, and raw content/summary response fields and models have been removed.
+Unknown response fields continue to be retained by Pydantic for forward compatibility.

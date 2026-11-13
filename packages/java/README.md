@@ -15,7 +15,7 @@ owned `ateve.ai` domain.
 <dependency>
     <groupId>ai.ateve</groupId>
     <artifactId>ateve-java</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 
@@ -164,24 +164,31 @@ mvn -Prelease verify  # also builds sources.jar and javadoc.jar
 
 ## Search contract limits
 
-Use `SearchRequest.builder().maxResults(...)` (1–100, default 10); `limit`
-and `offset` have been removed. `ContentOptions.snippet` is optional and
-its builder defaults to `true`. To retrieve full text, pass
-`content(ContentOptions.builder().text(TextOptions.builder().build()).build())`,
-or configure `TextOptions.builder().maxCharacters(8000).format(ContentFormat.MARKDOWN).build()`.
-`format` accepts `ContentFormat.TEXT` (default) or `ContentFormat.MARKDOWN`.
-Omitting `text` does not request full text. `maxCharacters` remains a positive
-signed 32-bit integer; its server default is 5000 per result, applied after
-format conversion. Use `ContentOptions.builder().highlights(true).build()`
-under `content` to receive query-relevant excerpts in `SearchResult.highlights()`
-(an immutable `List<String>`, or `null` when absent). Highlights default to
-`false` and can coexist with snippets and full text. They focus on evidence that
-directly supports answers, reducing unrelated information compared with snippets.
-`summary` has been removed from `ContentOptions`; `favicon` remains optional
-under `content`.
+Use `SearchRequest.builder().maxResults(...)` to set the maximum number of
+results (1–100, default 10). `limit` and `offset` have been removed.
 
-Both formats return content through `SearchResult.text()`, which is `null`
-when absent or extraction fails. Snippets may coexist with text; use
-`ContentOptions.builder().snippet(false)` to omit them. Obsolete answer, usage,
-news/video, query tuning and raw content/summary response fields
-and models have been removed.
+Snippets are always returned and cannot be disabled. To request full text, pass
+`content(ContentOptions.builder().text(TextOptions.builder().build()).build())`.
+To customize the output, use
+`TextOptions.builder().maxCharacters(8000).format(ContentFormat.MARKDOWN).build()`.
+`format` accepts `ContentFormat.TEXT` (default) or `ContentFormat.MARKDOWN`.
+Full text is requested only when `text` is supplied. `maxCharacters` must be a
+positive signed 32-bit integer. The server default is 5,000 characters per
+result, applied after format conversion. Both formats return content through
+`SearchResult.text()`, which is `null` when absent or extraction fails.
+Full text is returned alongside snippets.
+
+Highlights are optional and disabled by default. Set
+`content(ContentOptions.builder().highlights(true).build())` to return concise,
+query-relevant excerpts in addition to snippets. `SearchResult.highlights()`
+returns an immutable `List<String>`, or `null` when the field is absent.
+Highlights can coexist with snippets and full text.
+
+For token-efficient workflows, your agent can prioritize highlights when building
+model context and supplement them with snippets when additional context is needed.
+When the API returns both fields, token savings depend on which content your
+agent passes to the model.
+
+`summary` and the snippet toggle have been removed from `ContentOptions`.
+`favicon` remains optional under `content`. Obsolete answer, usage, news/video,
+query tuning, and raw content/summary response fields and models have been removed.

@@ -25,6 +25,8 @@ def test_request_models_preserve_validation_and_frozen_configuration() -> None:
         request.query = "changed"
     with pytest.raises(ValidationError):
         TextOptions(max_characters=True)
+    with pytest.raises(ValidationError, match="snippet"):
+        ContentOptions.model_validate({"snippet": False})
 
 
 def test_response_models_preserve_defaults_nulls_extra_fields_and_dates() -> None:
@@ -54,7 +56,6 @@ def test_request_lists_are_snapshots_and_wire_names_stay_snake_case() -> None:
 
 def test_request_defaults_and_nested_text_activation() -> None:
     assert SearchRequest(query="q").max_results == 10
-    assert ContentOptions().snippet is True
     assert ContentOptions().highlights is False
     assert ContentOptions().text is None
     assert TextOptions().format == ContentFormat.TEXT
@@ -62,10 +63,7 @@ def test_request_defaults_and_nested_text_activation() -> None:
     assert request.model_dump(mode="json", exclude_none=True) == {
         "query": "q",
         "max_results": 10,
-        "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
-    }
-    assert ContentOptions(snippet=False).model_dump(exclude_none=True) == {
-        "snippet": False, "highlights": False
+        "content": {"highlights": False, "text": {"format": "text"}},
     }
     assert ContentOptions(highlights=True).highlights is True
 

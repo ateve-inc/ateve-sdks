@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ateve Search API — SDK contract",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Search request and response models aligned with live API probes on October 9, 2026 and the October 26, 2026 highlights update. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
   },
   "servers": [
@@ -92,14 +92,10 @@
         "description": "ContentOptions model for POST /v1/search.",
         "x-sdk-kind": "request",
         "properties": {
-          "snippet": {
-            "type": "boolean",
-            "default": true
-          },
           "highlights": {
             "type": "boolean",
             "default": false,
-            "description": "Enable query-relevant excerpts that directly support answers, reducing unrelated information compared with snippets."
+            "description": "Request concise, query-relevant excerpts in addition to snippets."
           },
           "text": {
             "$ref": "#/components/schemas/TextOptions"
@@ -217,14 +213,14 @@
           },
           "snippet": {
             "type": "string",
-            "description": "Excerpt returned by default, including alongside text; omitted when content.snippet is false."
+            "description": "Excerpt returned with every result, including when highlights or full text are requested."
           },
           "highlights": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Query-relevant excerpts that directly support answers, returned alongside snippet when content.highlights is true."
+            "description": "Concise, query-relevant excerpts returned alongside the snippet when content.highlights is true."
           },
           "text": {
             "type": ["string", "null"],

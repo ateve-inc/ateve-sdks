@@ -57,7 +57,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
         date_range="2026-01-01..2026-06-30",
         locale=LocaleSettings(mkt="US", language="en"),
         content=ContentOptions(
-            snippet=False, highlights=True,
+            highlights=True,
             text=TextOptions(format=ContentFormat.MARKDOWN, max_characters=5000)
         ),
         safe_search=False,
@@ -67,7 +67,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert payload["date_range"] == "2026-01-01..2026-06-30"
     assert payload["safe_search"] is False
     assert payload["max_results"] == 20
-    assert payload["content"]["snippet"] is False
+    assert "snippet" not in payload["content"]
     assert payload["content"]["highlights"] is True
     assert not {"limit", "offset", "contents"}.intersection(payload)
     assert payload["content"]["text"]["max_characters"] == 5000
@@ -345,7 +345,7 @@ def test_sync_and_async_send_new_defaults_and_nested_text_options() -> None:
             AsyncAteve("sk_test", http_client=transport) as client,
         ):
             response = await client.search(
-                "q", max_results=100, content=ContentOptions(snippet=False, highlights=True)
+                "q", max_results=100, content=ContentOptions(highlights=True)
             )
             assert response.results[0].highlights == GOLDEN_RESPONSE["results"][0]["highlights"]
             await client.search(
@@ -358,12 +358,12 @@ def test_sync_and_async_send_new_defaults_and_nested_text_options() -> None:
         {
             "query": "q",
             "max_results": 10,
-            "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
+            "content": {"highlights": False, "text": {"format": "text"}},
         },
-        {"query": "q", "max_results": 100, "content": {"snippet": False, "highlights": True}},
+        {"query": "q", "max_results": 100, "content": {"highlights": True}},
         {
             "query": "q",
             "max_results": 10,
-            "content": {"snippet": True, "highlights": False, "text": {"format": "text"}},
+            "content": {"highlights": False, "text": {"format": "text"}},
         },
     ]

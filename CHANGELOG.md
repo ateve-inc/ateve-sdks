@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2 — 2026-11-13
+
+### Documentation
+
+- Update the Java, JavaScript/TypeScript, and Python search guides to document
+  always-returned snippets, optional highlights and full text, and how to select
+  excerpts for token-efficient model context.
+
 ## 0.2.1 — 2026-10-26
 
 - Add a required live API contract check to trusted CI and release runs, using

@@ -24,7 +24,6 @@ export function toWire(request: SearchRequest): Record<string, unknown> {
   }
   if (request.content !== undefined) {
     const content: Record<string, unknown> = {
-      snippet: request.content.snippet ?? true,
       highlights: request.content.highlights ?? false,
     };
     if (request.content.text !== undefined) {

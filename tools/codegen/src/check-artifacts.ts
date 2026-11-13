@@ -84,8 +84,11 @@ response.then((value) => {
 const error: Error = new ApiError("failure", { statusCode: 400 });
 // @ts-expect-error Request highlights must be boolean.
 const invalid: ContentOptions = { highlights: "true" };
+// @ts-expect-error Request snippets are always enabled by the server.
+const removed: ContentOptions = { snippet: false };
 void error;
 void invalid;
+void removed;
 `;
   for (const extension of ["mts", "cts"])
     writeFileSync(path.join(temporary, `consumer.${extension}`), consumer);
@@ -125,7 +128,6 @@ void invalid;
           query: "artifact smoke test",
           max_results: 2,
           content: {
-            snippet: true,
             highlights: true,
             text: { max_characters: 100, format: "text" },
           },
@@ -182,7 +184,7 @@ def handler(request):
     assert request.headers['User-Agent'] == f'ateve-python/{sys.argv[4]}'
     assert json.loads(request.content) == {
         'query': 'artifact smoke test', 'max_results': 2,
-        'content': {'snippet': True, 'highlights': True, 'text': {'max_characters': 100, 'format': 'text'}},
+        'content': {'highlights': True, 'text': {'max_characters': 100, 'format': 'text'}},
     }
     return httpx.Response(200, json=body)
 with httpx.Client(transport=httpx.MockTransport(handler)) as transport:
@@ -276,7 +278,7 @@ public final class ArtifactSmoke {
       assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString("utf8")), {
         query: "artifact smoke test",
         max_results: 2,
-        content: { snippet: true, highlights: true, text: { max_characters: 100, format: "text" } },
+        content: { highlights: true, text: { max_characters: 100, format: "text" } },
       });
       response.writeHead(200, { "Content-Type": "application/json" });
       response.end(JSON.stringify(fixture));

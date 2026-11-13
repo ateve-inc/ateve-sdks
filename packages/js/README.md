@@ -52,21 +52,30 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 
 ## Search contract limits
 
-Use `maxResults` (1–100, default 10); `limit` and `offset` have been removed.
-`content.snippet` is optional and defaults to `true`. To retrieve full text,
-pass `content: { text: {} }`, or configure
-`content: { text: { maxCharacters: 8000, format: "markdown" } }`.
-`format` accepts `"text"` (default) or `"markdown"`. Omitting `text` does not
-request full text. `maxCharacters` remains a positive signed 32-bit integer;
-its server default is 5000 per result, applied after format conversion.
-Set `content: { highlights: true }` to receive query-relevant excerpts in
-`results[].highlights` (`string[]`). Highlights default to `false` and can coexist
-with snippets and full text. They focus on evidence that directly supports
-answers, reducing unrelated information compared with snippets.
-`content.summary` has been removed; `favicon` remains optional under `content`.
+Use `maxResults` to set the maximum number of results (1–100, default 10).
+`limit` and `offset` have been removed.
 
-Both formats return content in `results[].text`. It is omitted when text is
-not requested and `null` when extraction fails. Snippets may coexist with text;
-set `content.snippet: false` to omit them. Responses contain `query.original`,
-`results` and request metadata; answer, usage, news/video, query tuning and
-raw content/summary response models have been removed.
+Snippets are always returned and cannot be disabled. To request full text, pass
+`content: { text: {} }`. To customize the output, use
+`content: { text: { maxCharacters: 8000, format: "markdown" } }`.
+`format` accepts `"text"` (default) or `"markdown"`. Full text is requested only
+when `text` is supplied. `maxCharacters` must be a positive signed 32-bit integer.
+The server default is 5,000 characters per result, applied after format conversion.
+Both formats return content in `results[].text`, which is omitted when full text
+isn't requested and `null` when extraction fails. Full text is returned alongside
+snippets.
+
+Highlights are optional and disabled by default. Set `content: { highlights: true }`
+to return concise, query-relevant excerpts in addition to snippets.
+`results[].highlights` is a `string[]` when present and `undefined` when absent.
+Highlights can coexist with snippets and full text.
+
+For token-efficient workflows, your agent can prioritize highlights when building
+model context and supplement them with snippets when additional context is needed.
+When the API returns both fields, token savings depend on which content your
+agent passes to the model.
+
+`summary` and the snippet toggle have been removed from `ContentOptions`.
+`favicon` remains optional under `content`. Responses contain `query.original`,
+`results` and request metadata. Obsolete answer, usage, news/video, query tuning,
+and raw content/summary response fields and models have been removed.
