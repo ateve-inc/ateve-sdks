@@ -62,13 +62,11 @@ export function searchResponse(value: unknown): SearchResponse {
   ) {
     throw new TypeError("SearchResponse is missing one or more required fields");
   }
-  const parsed: SearchResponse = {
+  return {
     id,
     created,
     latencyMs,
     query: queryInfo(item.query),
     results: item.results.map(result),
   };
-  assign(parsed, "totalEstimatedMatches", nullableNumber(item.total_estimated_matches));
-  return parsed;
 }

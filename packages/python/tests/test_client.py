@@ -81,7 +81,7 @@ def test_sync_golden_contract_and_wire_names() -> None:
     assert response.results[0].published_at is not None
     assert response.results[0].highlights == GOLDEN_RESPONSE["results"][0]["highlights"]
     assert response.query.original == "climate policy analysis"
-    assert response.total_estimated_matches == 128000
+    assert "total_estimated_matches" not in type(response).model_fields
 
 
 def test_no_retry_and_structured_rate_limit_metadata() -> None:

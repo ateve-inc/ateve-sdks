@@ -79,7 +79,6 @@ class AteveClientTest {
 
             assertEquals("srch_01J9ZK3V6XQ8", response.id());
             assertEquals(412, response.latencyMs());
-            assertEquals(128000L, response.totalEstimatedMatches());
             assertEquals("climate policy analysis", response.query().original());
             assertEquals("reuters.com/article/abc", response.results().get(0).displayUrl());
             assertEquals(Instant.parse("2026-06-12T08:30:00Z"),
@@ -99,7 +98,7 @@ class AteveClientTest {
                 api.enqueue(200, Fixtures.liveResponse(scenario));
                 SearchResponse response = client(api).search(minimalRequest());
                 assertEquals("Python programming language", response.query().original());
-                assertEquals(response.results().size(), response.totalEstimatedMatches().intValue());
+                assertEquals(scenario.equals("no-snippet") ? 1 : 2, response.results().size());
                 if (scenario.equals("text") || scenario.equals("markdown")) {
                     assertEquals(300, response.results().get(0).text().length());
                     assertNull(response.results().get(1).text());
@@ -120,7 +119,6 @@ class AteveClientTest {
                 api.enqueue(200, Fixtures.liveResponse(scenario));
                 SearchResponse response = client(api).search(minimalRequest());
                 assertEquals(2, response.results().size());
-                assertEquals(125L, response.totalEstimatedMatches());
                 for (SearchResult result : response.results()) {
                     assertEquals(List.of("Programming Language\n\nPython"), result.highlights());
                     assertEquals(scenario.equals("highlights-no-snippet"), result.snippet() == null);

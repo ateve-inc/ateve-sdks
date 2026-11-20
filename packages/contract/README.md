@@ -6,8 +6,7 @@ Its `format` defaults to `text`, and `max_characters` limits the length per
 result after format conversion. Set `content.highlights` to true to request
 concise, query-relevant excerpts. Highlights are disabled by default.
 
-The response contains `id`, `created`, `latency_ms`, `query.original`, `results`,
-and optional `total_estimated_matches`, which can exceed the returned count.
+The response contains `id`, `created`, `latency_ms`, `query.original`, and `results`.
 Each result includes `snippet`. When requested, `highlights` (`string[]`) and
 extracted `text` can appear alongside it. Both text formats use the same
 `text` field. Extraction failure produces `text: null`. The API omits `text`

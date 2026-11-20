@@ -73,7 +73,7 @@ it("preserves falsy values while omitting obsolete response fields", async () =>
     images: [],
     videos: [],
     usage: {},
-    total_estimated_matches: null,
+    total_estimated_matches: 128000,
   };
   const client = new Ateve({
     apiKey: "key",
@@ -94,7 +94,6 @@ it("preserves falsy values while omitting obsolete response fields", async () =>
         images: [{ url: "", width: 0, height: null, alt: "" }],
       },
     ],
-    totalEstimatedMatches: null,
   });
 });
 

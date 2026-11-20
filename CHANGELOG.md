@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3 — 2026-11-20
+
+- Remove `total_estimated_matches` from the search response contract and all
+  three SDK models. Applications that read the estimate must remove that
+  dependency. To count the results in a single response, use the length of
+  `results`.
+- Update workspace development dependencies and the pnpm lockfile.
+
 ## 0.2.2 — 2026-11-13
 
 ### Documentation

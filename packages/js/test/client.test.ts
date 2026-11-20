@@ -62,7 +62,6 @@ describe("Ateve JavaScript SDK", () => {
       "The policy includes annual progress reviews.",
     ]);
     expect(response.query.original).toBe("climate policy analysis");
-    expect(response.totalEstimatedMatches).toBe(128000);
   });
 
   it("does not retry and preserves rate-limit hints", async () => {

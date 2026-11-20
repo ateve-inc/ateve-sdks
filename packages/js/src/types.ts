@@ -79,8 +79,6 @@ export interface SearchResponse {
   latencyMs: number;
   query: QueryInfo;
   results: SearchResult[];
-  /** Estimated matches returned by the server; may exceed the number of results in this response. */
-  totalEstimatedMatches?: number | null;
 }
 
 export * from "./options";

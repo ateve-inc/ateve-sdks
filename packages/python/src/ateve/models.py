@@ -157,4 +157,3 @@ class SearchResponse(ResponseModel):
     latency_ms: int
     query: QueryInfo
     results: List[SearchResult]
-    total_estimated_matches: Optional[int] = None

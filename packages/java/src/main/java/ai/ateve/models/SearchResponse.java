@@ -11,7 +11,6 @@ public final class SearchResponse {
     private Integer latencyMs;
     private QueryInfo query;
     private List<SearchResult> results;
-    private Long totalEstimatedMatches;
 
     private SearchResponse() {}
 
@@ -20,5 +19,4 @@ public final class SearchResponse {
     public Integer latencyMs() { return latencyMs; }
     public QueryInfo query() { return query; }
     public List<SearchResult> results() { return results == null ? null : Collections.unmodifiableList(results); }
-    public Long totalEstimatedMatches() { return totalEstimatedMatches; }
 }

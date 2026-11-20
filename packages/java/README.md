@@ -15,7 +15,7 @@ owned `ateve.ai` domain.
 <dependency>
     <groupId>ai.ateve</groupId>
     <artifactId>ateve-java</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3</version>
 </dependency>
 ```
 
