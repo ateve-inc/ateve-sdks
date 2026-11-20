@@ -17,8 +17,8 @@
     "locks:check": "uv lock --check"
   },
   "devDependencies": {
-    "oxfmt": "^0.78.0",
-    "turbo": "^2.11.11"
+    "oxfmt": "^0.79.0",
+    "turbo": "^2.11.13"
   },
   "devEngines": {
     "packageManager": {
