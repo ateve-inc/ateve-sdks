@@ -89,7 +89,7 @@ public final class AteveClient {
     /** Default {@link Builder#maxResponseBytes(long)} value: 32 MiB. */
     public static final long DEFAULT_MAX_RESPONSE_BYTES = 32L * 1024 * 1024;
 
-    static final String VERSION = "0.2.3";
+    static final String VERSION = "0.3.0";
     static final String USER_AGENT = "ateve-java/" + VERSION;
 
     private static final Set<String> BILLING_ERROR_CODES =

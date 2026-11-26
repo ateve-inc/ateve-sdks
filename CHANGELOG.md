@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-11-26
+
+- Add image and video search to the JavaScript/TypeScript, Python and Java SDKs,
+  with dedicated request and response types for `POST /v1/images` and
+  `POST /v1/videos`. Use `searchImages` and `searchVideos` in JavaScript
+  and Java, or `search_images` and `search_videos` in Python. Python and Java
+  also support asynchronous calls.
+- Extend the production API contract check to cover image and video search.
+- Update workspace development dependencies.
+
 ## 0.2.3 — 2026-11-20
 
 - Remove `total_estimated_matches` from the search response contract and all
