@@ -1,10 +1,9 @@
 # Ateve Java SDK
 
-Official Java client for the Ateve Search API (`POST /v1/search`).
+Official Java client for Ateve web, image and video search.
 
 - Coordinates: `ai.ateve:ateve-java` · Package: `ai.ateve` · JDK 11+
 - Runtime dependency: jackson-databind only
-- Contract source of truth: [`../contract/openapi.json`](../contract/openapi.json) (local SDK compatibility baseline)
 
 The public Java namespace is exclusively `ai.ateve.*`, derived from Ateve's
 owned `ateve.ai` domain.
@@ -34,6 +33,13 @@ SearchResponse response = client.search(SearchRequest.builder()
 
 System.out.println(response.id());
 ```
+
+## Images Search and Videos Search
+
+| Native SDK feature | Status   |
+| ------------------ | -------- |
+| Images Search      | Released |
+| Videos Search      | Released |
 
 ## Thin client semantics
 
@@ -162,7 +168,7 @@ mvn test              # local JDK HttpServer tests; no external network
 mvn -Prelease verify  # also builds sources.jar and javadoc.jar
 ```
 
-## Search contract limits
+## Web Search limits
 
 Use `SearchRequest.builder().maxResults(...)` to set the maximum number of
 results (1–100, default 10). `limit` and `offset` have been removed.

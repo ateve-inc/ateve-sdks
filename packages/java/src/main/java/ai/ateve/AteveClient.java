@@ -12,6 +12,11 @@ import ai.ateve.errors.RateLimitException;
 import ai.ateve.errors.ServerException;
 import ai.ateve.internal.ErrorBody;
 import ai.ateve.internal.Json;
+import ai.ateve.models.ImageSearchRequest;
+import ai.ateve.models.ImageSearchResponse;
+import ai.ateve.models.QueryInfo;
+import ai.ateve.models.VideoSearchRequest;
+import ai.ateve.models.VideoSearchResponse;
 import ai.ateve.models.SearchRequest;
 import ai.ateve.models.SearchResponse;
 
@@ -29,6 +34,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -38,7 +44,7 @@ import java.util.concurrent.Flow;
 import java.util.concurrent.Semaphore;
 
 /**
- * Thread-safe client for {@code POST /v1/search}.
+ * Thread-safe client for web, image and video searches.
  *
  * <pre>{@code
  * AteveClient client = AteveClient.builder().build(); // reads ATEVE_API_KEY
@@ -98,6 +104,8 @@ public final class AteveClient {
     private final String authHeader;
     private final String baseUrl;
     private final URI searchUri;
+    private final URI imagesUri;
+    private final URI videosUri;
     private final Duration timeout;
     private final long maxResponseBytes;
     private final int maxConcurrentRequests;
@@ -107,7 +115,10 @@ public final class AteveClient {
     private AteveClient(Builder builder) {
         this.authHeader = "Bearer " + builder.resolveApiKey();
         this.baseUrl = builder.resolveBaseUrl();
-        this.searchUri = toSearchUri(baseUrl);
+        validateBaseUrl(baseUrl);
+        this.searchUri = URI.create(baseUrl + "/v1/search");
+        this.imagesUri = URI.create(baseUrl + "/v1/images");
+        this.videosUri = URI.create(baseUrl + "/v1/videos");
         this.timeout = builder.timeout;
         this.maxResponseBytes = builder.maxResponseBytes;
         this.maxConcurrentRequests = builder.maxConcurrentRequests;
@@ -140,7 +151,18 @@ public final class AteveClient {
      * @throws ConcurrencyLimitException client-side bulkhead full; request not sent
      */
     public SearchResponse search(SearchRequest request) {
-        CompletableFuture<SearchResponse> future = searchAsync(request);
+        return await(searchAsync(request));
+    }
+
+    public ImageSearchResponse searchImages(ImageSearchRequest request) {
+        return await(searchImagesAsync(request));
+    }
+
+    public VideoSearchResponse searchVideos(VideoSearchRequest request) {
+        return await(searchVideosAsync(request));
+    }
+
+    private <T> T await(CompletableFuture<T> future) {
         try {
             return future.get();
         } catch (ExecutionException e) {
@@ -175,6 +197,24 @@ public final class AteveClient {
      * completion threads; use {@code thenApplyAsync} for expensive work.
      */
     public CompletableFuture<SearchResponse> searchAsync(SearchRequest request) {
+        return send(request, searchUri, SearchResponse.class,
+                r -> validEnvelope(r.id(), r.created(), r.latencyMs(), r.query(), r.results()));
+    }
+
+    public CompletableFuture<ImageSearchResponse> searchImagesAsync(ImageSearchRequest request) {
+        return send(request, imagesUri, ImageSearchResponse.class,
+                r -> validEnvelope(r.id(), r.created(), r.latencyMs(), r.query(), r.results())
+                        && r.results().stream().allMatch(item -> item != null && item.id() != null));
+    }
+
+    public CompletableFuture<VideoSearchResponse> searchVideosAsync(VideoSearchRequest request) {
+        return send(request, videosUri, VideoSearchResponse.class,
+                r -> validEnvelope(r.id(), r.created(), r.latencyMs(), r.query(), r.results())
+                        && r.results().stream().allMatch(item -> item != null && item.id() != null));
+    }
+
+    private <T> CompletableFuture<T> send(Object request, URI uri, Class<T> model,
+                                           Predicate<T> valid) {
         Objects.requireNonNull(request, "request");
 
         if (bulkhead != null && !bulkhead.tryAcquire()) {
@@ -187,7 +227,7 @@ public final class AteveClient {
         final HttpRequest httpRequest;
         try {
             byte[] body = Json.writeBytes(request);
-            httpRequest = HttpRequest.newBuilder(searchUri)
+            httpRequest = HttpRequest.newBuilder(uri)
                     .timeout(timeout)
                     .header("Authorization", authHeader)
                     .header("Content-Type", "application/json")
@@ -214,23 +254,26 @@ public final class AteveClient {
                     false));
         }
 
-        CompletableFuture<SearchResponse> result = new CompletableFuture<>();
+        CompletableFuture<T> result = new CompletableFuture<>();
         exchange.whenComplete((response, error) -> {
-            SearchResponse value = null;
+            T value = null;
             Throwable failure = null;
             try {
                 if (error != null) {
                     failure = mapTransportError(error);
                 } else if (response.statusCode() >= 200 && response.statusCode() < 300) {
                     try {
-                        value = Json.read(response.body(), SearchResponse.class);
-                        validateSearchResponse(value);
+                        value = Json.read(response.body(), model);
+                        if (value == null || !valid.test(value)) {
+                            throw new IllegalArgumentException(model.getSimpleName()
+                                    + " is missing one or more required fields");
+                        }
                     } catch (Error fatal) {
                         failure = fatal;
                     } catch (RuntimeException decodingFailure) {
                         failure = new ApiResponseException(
                                 "Response from " + baseUrl
-                                        + " could not be decoded as SearchResponse",
+                                        + " could not be decoded as " + model.getSimpleName(),
                                 response.statusCode(),
                                 response.headers().firstValue("X-Request-Id").orElse(null),
                                 baseUrl,
@@ -259,17 +302,10 @@ public final class AteveClient {
      * Rejects a syntactically valid JSON value that does not satisfy the
      * stable, always-present portion of the public response contract.
      */
-    private static void validateSearchResponse(SearchResponse response) {
-        if (response == null
-                || response.id() == null
-                || response.created() == null
-                || response.latencyMs() == null
-                || response.query() == null
-                || response.query().original() == null
-                || response.results() == null) {
-            throw new IllegalArgumentException(
-                    "SearchResponse is missing one or more required fields");
-        }
+    private static boolean validEnvelope(String id, Long created, Integer latencyMs,
+                                         QueryInfo query, List<?> results) {
+        return id != null && created != null && latencyMs != null && query != null
+                && query.original() != null && results != null;
     }
 
     private void releasePermit() {
@@ -304,7 +340,7 @@ public final class AteveClient {
         return builder.build();
     }
 
-    private static URI toSearchUri(String baseUrl) {
+    private static void validateBaseUrl(String baseUrl) {
         URI base;
         try {
             base = URI.create(baseUrl);
@@ -322,7 +358,6 @@ public final class AteveClient {
                     "baseUrl must be an absolute http(s) URI without user-info, query, or fragment: "
                             + baseUrl);
         }
-        return URI.create(baseUrl + "/v1/search");
     }
 
     private static Throwable unwrap(Throwable throwable) {

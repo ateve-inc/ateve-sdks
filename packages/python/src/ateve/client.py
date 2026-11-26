@@ -7,7 +7,7 @@ import os
 import threading
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, TypeVar, Union
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
@@ -26,9 +26,15 @@ from .errors import (
 )
 from .models import (
     ContentOptions,
+    ImageSearchRequest,
+    ImageSearchResponse,
     LocaleSettings,
+    RequestModel,
+    ResponseModel,
     SearchRequest,
     SearchResponse,
+    VideoSearchRequest,
+    VideoSearchResponse,
 )
 
 DEFAULT_BASE_URL = "https://api.ateve.ai"
@@ -37,6 +43,22 @@ DEFAULT_CONNECT_TIMEOUT = 5.0
 DEFAULT_MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 USER_AGENT = f"ateve-python/{__version__}"
 _BILLING_CODES = {"insufficient_credit", "credit_limit_exceeded", "payment_required"}
+
+
+_Response = TypeVar("_Response", bound=ResponseModel)
+_MediaRequest = TypeVar("_MediaRequest", ImageSearchRequest, VideoSearchRequest)
+
+
+def _media_request(
+    model: type[_MediaRequest], query: Union[str, _MediaRequest], max_results: Optional[int]
+) -> _MediaRequest:
+    if isinstance(query, str):
+        return model(query=query, max_results=max_results)
+    if isinstance(query, model):
+        if max_results is not None:
+            raise TypeError("max_results cannot be combined with a request instance")
+        return query
+    raise TypeError(f"query must be a string or {model.__name__}")
 
 
 class _BodyLimitExceeded(Exception):
@@ -240,7 +262,6 @@ class _BaseAteve:
     ) -> None:
         _validate_limits(max_response_bytes, max_concurrent_requests)
         self._base_url = _normalize_base_url(base_url)
-        self._search_url = self._base_url + "/v1/search"
         self._timeout = _timeout(timeout, connect_timeout)
         self._max_response_bytes = max_response_bytes
         self._max_concurrent_requests = max_concurrent_requests
@@ -256,14 +277,14 @@ class _BaseAteve:
         if self._closed:
             raise RuntimeError("Ateve client is closed")
 
-    def _decode(self, response: httpx.Response, body: bytes) -> SearchResponse:
+    def _decode(self, response: httpx.Response, body: bytes, model: type[_Response]) -> _Response:
         if not 200 <= response.status_code < 300:
             raise _map_api_error(response, body)
         try:
-            return SearchResponse.model_validate_json(body)
+            return model.model_validate_json(body)
         except ValidationError as exc:
             raise ApiResponseError(
-                f"Response from {self._base_url} could not be decoded as SearchResponse",
+                f"Response from {self._base_url} could not be decoded as {model.__name__}",
                 status_code=response.status_code,
                 request_id=response.headers.get("X-Request-Id"),
                 base_url=self._base_url,
@@ -324,13 +345,32 @@ class Ateve(_BaseAteve):
             content=content,
             safe_search=safe_search,
         )
+        return self._send("/v1/search", request, SearchResponse)
+
+    def search_images(
+        self, query: Union[str, ImageSearchRequest], *, max_results: Optional[int] = None
+    ) -> ImageSearchResponse:
+        self._ensure_open()
+        request = _media_request(ImageSearchRequest, query, max_results)
+        return self._send("/v1/images", request, ImageSearchResponse)
+
+    def search_videos(
+        self, query: Union[str, VideoSearchRequest], *, max_results: Optional[int] = None
+    ) -> VideoSearchResponse:
+        self._ensure_open()
+        request = _media_request(VideoSearchRequest, query, max_results)
+        return self._send("/v1/videos", request, VideoSearchResponse)
+
+    def _send(
+        self, path: str, request: RequestModel, model: type[_Response]
+    ) -> _Response:
         if self._bulkhead is not None and not self._bulkhead.acquire(blocking=False):
             raise ConcurrencyLimitError(self._max_concurrent_requests)
         try:
             try:
                 with self._client.stream(
                     "POST",
-                    self._search_url,
+                    self._base_url + path,
                     headers=self._headers,
                     json=request.model_dump(mode="json", exclude_none=True),
                     timeout=self._timeout,
@@ -350,7 +390,7 @@ class Ateve(_BaseAteve):
                     base_url=self._base_url,
                     request_may_have_been_sent=_request_may_have_been_sent(exc),
                 ) from exc
-            return self._decode(response, body)
+            return self._decode(response, body, model)
         finally:
             if self._bulkhead is not None:
                 self._bulkhead.release()
@@ -439,6 +479,25 @@ class AsyncAteve(_BaseAteve):
             content=content,
             safe_search=safe_search,
         )
+        return await self._send("/v1/search", request, SearchResponse)
+
+    async def search_images(
+        self, query: Union[str, ImageSearchRequest], *, max_results: Optional[int] = None
+    ) -> ImageSearchResponse:
+        self._ensure_open()
+        request = _media_request(ImageSearchRequest, query, max_results)
+        return await self._send("/v1/images", request, ImageSearchResponse)
+
+    async def search_videos(
+        self, query: Union[str, VideoSearchRequest], *, max_results: Optional[int] = None
+    ) -> VideoSearchResponse:
+        self._ensure_open()
+        request = _media_request(VideoSearchRequest, query, max_results)
+        return await self._send("/v1/videos", request, VideoSearchResponse)
+
+    async def _send(
+        self, path: str, request: RequestModel, model: type[_Response]
+    ) -> _Response:
         if (
             self._max_concurrent_requests > 0
             and self._in_flight >= self._max_concurrent_requests
@@ -449,7 +508,7 @@ class AsyncAteve(_BaseAteve):
             try:
                 async with self._client.stream(
                     "POST",
-                    self._search_url,
+                    self._base_url + path,
                     headers=self._headers,
                     json=request.model_dump(mode="json", exclude_none=True),
                     timeout=self._timeout,
@@ -469,7 +528,7 @@ class AsyncAteve(_BaseAteve):
                     base_url=self._base_url,
                     request_may_have_been_sent=_request_may_have_been_sent(exc),
                 ) from exc
-            return self._decode(response, body)
+            return self._decode(response, body, model)
         finally:
             self._in_flight -= 1
 

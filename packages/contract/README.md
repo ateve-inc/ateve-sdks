@@ -1,6 +1,6 @@
 # SDK API contract
 
-`openapi.json` is an OpenAPI 3.1.0 document. Requests use `max_results` and
+`openapi.json` is an OpenAPI 3.1.0 document. Web search requests use `max_results` and
 `content`. Request full text through the optional `content.text` object.
 Its `format` defaults to `text`, and `max_characters` limits the length per
 result after format conversion. Set `content.highlights` to true to request
@@ -22,9 +22,18 @@ older responses. A permission-error fixture records the observed
 `validation.ts` supplies the same OpenAPI-backed validator to fixture checks and
 `pnpm --filter @ateve/contract live:check`. The live check requires `ATEVE_API_KEY`
 and validates requests plus raw successful responses before checking content
-behavior. It uses six real searches with no retries or response normalization.
+behavior. It sends six web searches, one image search and one video search to
+`https://api.ateve.ai`, with no retries or response normalization.
 The check writes neither keys nor response bodies to disk. CI runs it once
 outside the language matrix and injects the Actions secret only into that step.
+
+## Media search
+
+`POST /v1/images` and `POST /v1/videos` each define their own request, result and
+response schemas. Both accept `query` and optional `max_results` (1–10).
+The server supplies the default limit when the caller omits it. The
+`images-response.json` and `videos-response.json` fixtures are synthetic examples
+used by the SDK regression tests. Run [the test-environment media check](../../README.md#image-and-video-search-in-test) to validate real responses for both routes.
 
 ## Changing a model
 

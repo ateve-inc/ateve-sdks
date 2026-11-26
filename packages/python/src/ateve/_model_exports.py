@@ -3,6 +3,9 @@ from .models import (
     ContentFormat,
     ContentOptions,
     ImageItem,
+    ImageSearchRequest,
+    ImageSearchResponse,
+    ImageSearchResult,
     LocaleSettings,
     QueryInfo,
     SearchRequest,
@@ -10,12 +13,18 @@ from .models import (
     SearchResult,
     TextOptions,
     UserLocation,
+    VideoSearchRequest,
+    VideoSearchResponse,
+    VideoSearchResult,
 )
 
 __all__ = [
     "ContentFormat",
     "ContentOptions",
     "ImageItem",
+    "ImageSearchRequest",
+    "ImageSearchResponse",
+    "ImageSearchResult",
     "LocaleSettings",
     "QueryInfo",
     "SearchRequest",
@@ -23,4 +32,7 @@ __all__ = [
     "SearchResult",
     "TextOptions",
     "UserLocation",
+    "VideoSearchRequest",
+    "VideoSearchResponse",
+    "VideoSearchResult",
 ]

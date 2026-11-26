@@ -1,4 +1,4 @@
-"""Pydantic request and response models for ``POST /v1/search``."""
+"""Pydantic request and response models for the Ateve search endpoints."""
 
 from __future__ import annotations
 

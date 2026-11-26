@@ -1,6 +1,6 @@
 # Ateve SDKs
 
-Official SDKs for the Ateve Search API (`POST /v1/search`).
+Official SDKs for Ateve web, image and video search.
 
 | SDK                     | Directory                              | Registry      | Package               |
 | ----------------------- | -------------------------------------- | ------------- | --------------------- |
@@ -11,6 +11,32 @@ Official SDKs for the Ateve Search API (`POST /v1/search`).
 Each search call sends one HTTP request. Clients do not automatically retry or
 fail over: a timeout can occur after a billable search has executed. Retry,
 idempotency, circuit breaking and routing remain host-application concerns.
+
+## Image and video search in test
+
+The test environment serves `POST /v1/images` and `POST /v1/videos` at
+`https://api-test.ateve.ai`. Set `ATEVE_API_KEY` to a key authorized for the test
+environment. To check both endpoints and validate their responses against the
+shared OpenAPI contract, run:
+
+```bash
+pnpm --filter @ateve/contract media:check:test
+```
+
+For `https://api-preview.ateve.ai`, set `ATEVE_PREVIEW_API_KEY` to a preview key
+and run `pnpm --filter @ateve/contract media:check:preview`. Each check sends one
+request per endpoint to its selected environment.
+
+To inspect one response with curl:
+
+```bash
+curl --fail-with-body https://api-test.ateve.ai/v1/images \
+  -H "Authorization: Bearer ${ATEVE_API_KEY}" \
+  --json '{"query":"James Webb Space Telescope","max_results":1}'
+```
+
+Use `/v1/videos` for video search. Both endpoints accept a nonblank `query` of
+up to 1,000 characters and an optional `max_results` from 1 to 10.
 
 ## Development
 
@@ -80,7 +106,7 @@ Tooling lint checks Node script syntax, and tooling typecheck checks strict Type
 ## Shared API models
 
 [`packages/contract/`](packages/contract/) contains the OpenAPI 3.1 contract,
-bindings and fixtures. Requests use `max_results` (1–100, default 10) and
+bindings and fixtures. Web search requests use `max_results` (1–100, default 10) and
 `content`, with optional `highlights` (default false), nested `text` options,
 and optional `favicon`. Snippets are always returned. Enable
 `content.highlights` to receive concise, query-relevant excerpts in
@@ -110,7 +136,7 @@ node tools/codegen/src/check-artifacts.ts
 ```
 
 CI also runs a single **Live API contract** job after the SDK compatibility
-matrix succeeds. Configure the repository Actions secret `ATEVE_API_KEY`;
+matrix succeeds. Configure the repository Actions secret `ATEVE_API_KEY` with a production API key;
 it is injected only into the live-check step, and the release workflow forwards
 it explicitly to the reusable CI workflow. Missing credentials on a trusted run,
 HTTP failures, contract mismatches or content-option regressions fail CI and
@@ -122,10 +148,12 @@ Run the same check locally with `ATEVE_API_KEY` supplied through the environment
 pnpm --filter @ateve/contract live:check
 ```
 
-It sends six sequential requests to `https://api.ateve.ai/v1/search`, with
-two results per request and no retries. Each request and raw response is
-validated against the shared OpenAPI contract before checking content defaults,
-snippets, highlights and plain/Markdown text. These are real, billable
+A successful run sends eight requests to `https://api.ateve.ai`: six to
+`/v1/search` with a limit of two results, then one each to `/v1/images` and
+`/v1/videos` with a limit of one. Each request and raw response is checked
+against the shared OpenAPI contract. The web checks also verify content defaults,
+snippets, highlights and plain/Markdown text. The media checks verify the
+echoed query and result limit. These are real, billable
 searches. Keys and response bodies are not logged or saved by the check. The
 ordinary `pnpm check` remains offline and tests the live-check failure paths
 with an injected transport.

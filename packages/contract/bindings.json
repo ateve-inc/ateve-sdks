@@ -51,6 +51,16 @@
       "python": {
         "strict": true
       }
+    },
+    "ImageSearchRequest.max_results": {
+      "python": {
+        "strict": true
+      }
+    },
+    "VideoSearchRequest.max_results": {
+      "python": {
+        "strict": true
+      }
     }
   }
 }

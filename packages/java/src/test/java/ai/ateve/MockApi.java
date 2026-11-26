@@ -47,9 +47,13 @@ final class MockApi implements AutoCloseable {
             });
 
     MockApi() throws IOException {
+        this("/v1/search");
+    }
+
+    MockApi(String path) throws IOException {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.setExecutor(pool);
-        server.createContext("/v1/search", exchange -> {
+        server.createContext(path, exchange -> {
             int n = hits.getAndIncrement();
             try (InputStream in = exchange.getRequestBody()) {
                 ByteArrayOutputStream buf = new ByteArrayOutputStream();

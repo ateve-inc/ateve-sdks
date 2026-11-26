@@ -1,6 +1,6 @@
 # Ateve JavaScript / TypeScript SDK
 
-Official zero-runtime-dependency client for `POST /v1/search`. Requires Node.js
+Official zero-runtime-dependency client for Ateve web, image and video search. Requires Node.js
 22+ and ships ESM, CommonJS, and TypeScript declarations.
 
 ## Install
@@ -50,7 +50,22 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 `ApiConnectionError`, `ApiResponseError`, and `ConcurrencyLimitError`.
 `RateLimitError` preserves `retryAfterSeconds` and `limitScope`.
 
-## Search contract limits
+## TypeScript types
+
+Import the Web Search request and response types from the package root.
+
+```typescript
+import type { SearchRequest, SearchResponse } from "ateve";
+```
+
+## Images Search and Videos Search
+
+| Native SDK feature | Status   |
+| ------------------ | -------- |
+| Images Search      | Released |
+| Videos Search      | Released |
+
+## Web Search limits
 
 Use `maxResults` to set the maximum number of results (1–100, default 10).
 `limit` and `offset` have been removed.

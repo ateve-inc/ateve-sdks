@@ -81,4 +81,66 @@ export interface SearchResponse {
   results: SearchResult[];
 }
 
+export interface ImageSearchRequest {
+  query: string;
+  /** Maximum results to return. Defaults to 10 on the server. */
+  maxResults?: number;
+}
+
+export interface ImageSearchResult {
+  id: string;
+  title?: string | null;
+  /** Image file URL. */
+  url?: string | null;
+  publishedAt?: string | null;
+  /** Width in pixels. */
+  width?: number | null;
+  /** Height in pixels. */
+  height?: number | null;
+  alt?: string | null;
+  /** Page containing the image. */
+  hostPageUrl?: string | null;
+}
+
+export interface ImageSearchResponse {
+  id: string;
+  created: number;
+  latencyMs: number;
+  query: QueryInfo;
+  results: ImageSearchResult[];
+}
+
+export interface VideoSearchRequest {
+  query: string;
+  /** Maximum results to return. Defaults to 10 on the server. */
+  maxResults?: number;
+}
+
+export interface VideoSearchResult {
+  id: string;
+  title?: string | null;
+  /** Video watch page URL. */
+  url?: string | null;
+  publishedAt?: string | null;
+  /** Width in pixels. */
+  width?: number | null;
+  /** Height in pixels. */
+  height?: number | null;
+  siteName?: string | null;
+  description?: string | null;
+  summary?: string | null;
+  /** Duration in seconds. */
+  durationSeconds?: number | null;
+  /** Embeddable player URL. */
+  embeddingUrl?: string | null;
+}
+
+export interface VideoSearchResponse {
+  id: string;
+  created: number;
+  latencyMs: number;
+  query: QueryInfo;
+  results: VideoSearchResult[];
+}
+
 export * from "./options";

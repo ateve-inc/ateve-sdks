@@ -21,7 +21,7 @@ final class Fixtures {
     static String liveResponse(String scenario) {
         return load("live-" + scenario + "-response.json");
     }
-    private static String load(String name) {
+    static String load(String name) {
         try (InputStream stream = Fixtures.class.getResourceAsStream("/" + name)) {
             if (stream == null) throw new IllegalStateException("Missing fixture: " + name);
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);

@@ -1,4 +1,13 @@
-import type { ImageItem, QueryInfo, SearchResponse, SearchResult } from "../types";
+import type {
+  ImageSearchResponse,
+  VideoSearchResponse,
+  ImageSearchResult,
+  VideoSearchResult,
+  ImageItem,
+  QueryInfo,
+  SearchResponse,
+  SearchResult,
+} from "../types";
 import {
   assign,
   record,
@@ -48,7 +57,44 @@ function result(value: unknown): SearchResult {
   return parsed;
 }
 
-export function searchResponse(value: unknown): SearchResponse {
+function mediaResult(value: unknown): ImageSearchResult {
+  const item = record(value);
+  const id = string(item.id);
+  if (id === undefined) throw new TypeError("Media result id is required");
+  const parsed: ImageSearchResult = { id };
+  assign(parsed, "title", nullableString(item.title));
+  assign(parsed, "url", nullableString(item.url));
+  assign(parsed, "publishedAt", nullableString(item.published_at));
+  assign(parsed, "width", nullableNumber(item.width));
+  assign(parsed, "height", nullableNumber(item.height));
+  return parsed;
+}
+
+function imageResult(value: unknown): ImageSearchResult {
+  const parsed = mediaResult(value);
+  const item = record(value);
+  assign(parsed, "alt", nullableString(item.alt));
+  assign(parsed, "hostPageUrl", nullableString(item.host_page_url));
+  return parsed;
+}
+
+function videoResult(value: unknown): VideoSearchResult {
+  const parsed: VideoSearchResult = mediaResult(value);
+  const item = record(value);
+  assign(parsed, "siteName", nullableString(item.site_name));
+  assign(parsed, "description", nullableString(item.description));
+  assign(parsed, "summary", nullableString(item.summary));
+  assign(parsed, "durationSeconds", nullableNumber(item.duration_seconds));
+  assign(parsed, "embeddingUrl", nullableString(item.embedding_url));
+  return parsed;
+}
+
+export const imageSearchResponse = (value: unknown): ImageSearchResponse =>
+  envelope(value, imageResult);
+export const videoSearchResponse = (value: unknown): VideoSearchResponse =>
+  envelope(value, videoResult);
+
+function envelope<T>(value: unknown, parseResult: (item: unknown) => T) {
   const item = record(value);
   const id = string(item.id);
   const created = number(item.created);
@@ -67,6 +113,10 @@ export function searchResponse(value: unknown): SearchResponse {
     created,
     latencyMs,
     query: queryInfo(item.query),
-    results: item.results.map(result),
+    results: item.results.map(parseResult),
   };
+}
+
+export function searchResponse(value: unknown): SearchResponse {
+  return envelope(value, result);
 }

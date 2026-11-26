@@ -166,11 +166,16 @@ export function validate(api: Contract, bindings: Bindings): void {
   const visit = (value: unknown): void => {
     if (!value || typeof value !== "object") return;
     const ref = (value as Record<string, unknown>).$ref;
-    if (typeof ref === "string" && !schemas[ref.replace("#/components/schemas/", "")])
-      throw new Error(`Unresolved operation reference ${ref}`);
+    if (typeof ref === "string") {
+      const match = /^#\/components\/(schemas|responses)\/([^/]+)$/.exec(ref);
+      const targets = match?.[1] === "schemas" ? schemas : api.components.responses;
+      if (!match || !targets || !Object.hasOwn(targets, match[2]))
+        throw new Error(`Unresolved operation reference ${ref}`);
+    }
     for (const child of Object.values(value)) visit(child);
   };
   visit(api.paths);
+  visit(api.components.responses);
 }
 
 function tsType(schema: Schema): string {
@@ -403,8 +408,10 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
         setters: setters.join("\n"),
         constants: template(`java/${name}.constants.tpl`, context),
         builderHook:
-          template(`java/${name}.builder.tpl`, context) ||
-          `        public ${name} build() { return new ${name}(this); }`,
+          template(
+            `java/${["ImageSearchRequest", "VideoSearchRequest"].includes(name) ? "MediaSearchRequest" : name}.builder.tpl`,
+            { ...context, name },
+          ) || `        public ${name} build() { return new ${name}(this); }`,
       }) +
       "\n";
   }

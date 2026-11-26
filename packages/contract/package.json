@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "live:check": "node check-live.ts",
+    "media:check:test": "node check-media.ts test",
+    "media:check:preview": "node check-media.ts preview",
+    "live:check": "node check-live.ts && node check-media.ts production",
     "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts"
   },
   "devDependencies": {

@@ -1,0 +1,25 @@
+{
+  "id": "req_example_images",
+  "created": 1736672400,
+  "latency_ms": 5,
+  "query": {
+    "original": "Webb"
+  },
+  "results": [
+    {
+      "id": "image-1",
+      "title": "Webb telescope",
+      "url": "https://example.org/webb.jpg",
+      "host_page_url": "https://example.org/webb",
+      "width": 1024,
+      "height": 768,
+      "alt": "The Webb telescope",
+      "published_at": "2025-01-12T09:00:00Z"
+    },
+    {
+      "id": "image-2",
+      "url": "https://example.org/mirror.jpg",
+      "published_at": null
+    }
+  ]
+}

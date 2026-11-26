@@ -25,7 +25,7 @@ export interface Contract {
   openapi: string;
   info: { version: string };
   paths: Record<string, Record<string, unknown>>;
-  components: { schemas: Record<string, Schema> };
+  components: { schemas: Record<string, Schema>; responses?: Record<string, unknown> };
 }
 
 export interface PythonBinding {

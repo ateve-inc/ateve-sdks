@@ -1,4 +1,4 @@
-import type { SearchRequest } from "../types";
+import type { ImageSearchRequest, VideoSearchRequest, SearchRequest } from "../types";
 
 function requireIntegerRange(
   value: number | undefined,
@@ -103,4 +103,19 @@ export function validateRequest(request: SearchRequest): void {
   if (request.locale?.userLocation?.timezone !== undefined) {
     validateTimeZone(request.locale.userLocation.timezone);
   }
+}
+
+export function mediaBody(
+  request: ImageSearchRequest | VideoSearchRequest,
+): Record<string, unknown> {
+  if (typeof request?.query !== "string" || !request.query.trim())
+    throw new Error("query is required");
+  if (Array.from(request.query).length > 1000)
+    throw new Error("query must not exceed 1000 characters");
+  for (const field of Object.keys(request)) {
+    if (field !== "query" && field !== "maxResults")
+      throw new Error(`Unsupported media search parameter: ${field}`);
+  }
+  requireIntegerRange(request.maxResults, 1, 10, "maxResults");
+  return { query: request.query, max_results: request.maxResults };
 }

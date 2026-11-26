@@ -304,6 +304,504 @@
           }
         },
         "additionalProperties": true
+      },
+      "ImageSearchRequest": {
+        "type": "object",
+        "description": "Keyword search for images.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S"
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Maximum results to return. Defaults to 10 on the server."
+          }
+        },
+        "additionalProperties": false,
+        "required": ["query"]
+      },
+      "ImageSearchResult": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": ["string", "null"]
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "Image file URL."
+          },
+          "published_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "width": {
+            "type": ["integer", "null"],
+            "description": "Width in pixels."
+          },
+          "height": {
+            "type": ["integer", "null"],
+            "description": "Height in pixels."
+          },
+          "alt": {
+            "type": ["string", "null"]
+          },
+          "host_page_url": {
+            "type": ["string", "null"],
+            "description": "Page containing the image."
+          }
+        },
+        "additionalProperties": true,
+        "required": ["id"]
+      },
+      "ImageSearchResponse": {
+        "type": "object",
+        "description": "Results from POST /v1/images.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latency_ms": {
+            "type": "integer"
+          },
+          "query": {
+            "$ref": "#/components/schemas/QueryInfo"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageSearchResult"
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": ["id", "created", "latency_ms", "query", "results"]
+      },
+      "VideoSearchRequest": {
+        "type": "object",
+        "description": "Keyword search for videos.",
+        "x-sdk-kind": "request",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S"
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Maximum results to return. Defaults to 10 on the server."
+          }
+        },
+        "additionalProperties": false,
+        "required": ["query"]
+      },
+      "VideoSearchResult": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": ["string", "null"]
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "Video watch page URL."
+          },
+          "published_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "width": {
+            "type": ["integer", "null"],
+            "description": "Width in pixels."
+          },
+          "height": {
+            "type": ["integer", "null"],
+            "description": "Height in pixels."
+          },
+          "site_name": {
+            "type": ["string", "null"]
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "summary": {
+            "type": ["string", "null"]
+          },
+          "duration_seconds": {
+            "type": ["integer", "null"],
+            "description": "Duration in seconds."
+          },
+          "embedding_url": {
+            "type": ["string", "null"],
+            "description": "Embeddable player URL."
+          }
+        },
+        "additionalProperties": true,
+        "required": ["id"]
+      },
+      "VideoSearchResponse": {
+        "type": "object",
+        "description": "Results from POST /v1/videos.",
+        "x-sdk-kind": "response",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latency_ms": {
+            "type": "integer"
+          },
+          "query": {
+            "$ref": "#/components/schemas/QueryInfo"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoSearchResult"
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": ["id", "created", "latency_ms", "query", "results"]
+      }
+    },
+    "responses": {
+      "MediaError400": {
+        "description": "Invalid request",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "invalid_parameter",
+                    "message": "Invalid request"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError401": {
+        "description": "Invalid API key",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError402": {
+        "description": "Insufficient credit",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "insufficient_credit",
+                    "message": "Insufficient credit"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError403": {
+        "description": "Payment required",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "payment_required",
+                    "message": "Payment required"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError404": {
+        "description": "Unknown route",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "not_found",
+                    "message": "Unknown route"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError405": {
+        "description": "Unsupported method",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "method_not_allowed",
+                    "message": "Unsupported method"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError415": {
+        "description": "Unsupported media type",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "invalid_parameter",
+                    "message": "Unsupported media type"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError429": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "description": "Seconds or HTTP date; surfaced as a hint without retrying.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "rate_limit_exceeded",
+                    "message": "Rate limit exceeded"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError500": {
+        "description": "Internal error",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "server_error",
+                    "message": "Internal error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError502": {
+        "description": "Upstream unavailable",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "service_unavailable",
+                    "message": "Upstream unavailable"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "MediaError504": {
+        "description": "Upstream timeout",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "error": {
+                "value": {
+                  "id": "req_example_error",
+                  "error": {
+                    "code": "timeout",
+                    "message": "Upstream timeout"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -440,6 +938,237 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/images": {
+      "post": {
+        "operationId": "searchImages",
+        "summary": "Search for images by keyword.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageSearchRequest"
+              },
+              "examples": {
+                "minimal": {
+                  "value": {
+                    "query": "Webb"
+                  }
+                },
+                "limited": {
+                  "value": {
+                    "query": "Webb",
+                    "max_results": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageSearchResponse"
+                },
+                "examples": {
+                  "matches": {
+                    "value": {
+                      "id": "req_example_images",
+                      "created": 1736672400,
+                      "latency_ms": 5,
+                      "query": {
+                        "original": "Webb"
+                      },
+                      "results": [
+                        {
+                          "id": "image-1",
+                          "title": "Webb telescope",
+                          "url": "https://example.org/webb.jpg",
+                          "host_page_url": "https://example.org/webb",
+                          "width": 1024,
+                          "height": 768,
+                          "alt": "The Webb telescope",
+                          "published_at": "2025-01-12T09:00:00Z"
+                        },
+                        {
+                          "id": "image-2",
+                          "url": "https://example.org/mirror.jpg",
+                          "published_at": null
+                        }
+                      ]
+                    }
+                  },
+                  "empty": {
+                    "value": {
+                      "id": "req_example_images",
+                      "created": 1736672400,
+                      "latency_ms": 5,
+                      "query": {
+                        "original": "Webb"
+                      },
+                      "results": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MediaError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/MediaError401"
+          },
+          "402": {
+            "$ref": "#/components/responses/MediaError402"
+          },
+          "403": {
+            "$ref": "#/components/responses/MediaError403"
+          },
+          "404": {
+            "$ref": "#/components/responses/MediaError404"
+          },
+          "405": {
+            "$ref": "#/components/responses/MediaError405"
+          },
+          "415": {
+            "$ref": "#/components/responses/MediaError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/MediaError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/MediaError500"
+          },
+          "502": {
+            "$ref": "#/components/responses/MediaError502"
+          },
+          "504": {
+            "$ref": "#/components/responses/MediaError504"
+          }
+        }
+      }
+    },
+    "/v1/videos": {
+      "post": {
+        "operationId": "searchVideos",
+        "summary": "Search for videos by keyword.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoSearchRequest"
+              },
+              "examples": {
+                "minimal": {
+                  "value": {
+                    "query": "Webb"
+                  }
+                },
+                "limited": {
+                  "value": {
+                    "query": "Webb",
+                    "max_results": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoSearchResponse"
+                },
+                "examples": {
+                  "matches": {
+                    "value": {
+                      "id": "req_example_videos",
+                      "created": 1736672400,
+                      "latency_ms": 5,
+                      "query": {
+                        "original": "Webb"
+                      },
+                      "results": [
+                        {
+                          "id": "video-1",
+                          "title": "Webb explained",
+                          "url": "https://example.org/watch/webb",
+                          "embedding_url": "https://example.org/embed/webb",
+                          "width": 1920,
+                          "height": 1080,
+                          "site_name": "Example Observatory",
+                          "description": "A guide to the Webb telescope.",
+                          "summary": "How Webb works.",
+                          "duration_seconds": 180,
+                          "published_at": "2025-01-12T09:00:00Z"
+                        },
+                        {
+                          "id": "video-2",
+                          "embedding_url": "https://example.org/embed/mirror",
+                          "published_at": null
+                        }
+                      ]
+                    }
+                  },
+                  "empty": {
+                    "value": {
+                      "id": "req_example_videos",
+                      "created": 1736672400,
+                      "latency_ms": 5,
+                      "query": {
+                        "original": "Webb"
+                      },
+                      "results": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MediaError400"
+          },
+          "401": {
+            "$ref": "#/components/responses/MediaError401"
+          },
+          "402": {
+            "$ref": "#/components/responses/MediaError402"
+          },
+          "403": {
+            "$ref": "#/components/responses/MediaError403"
+          },
+          "404": {
+            "$ref": "#/components/responses/MediaError404"
+          },
+          "405": {
+            "$ref": "#/components/responses/MediaError405"
+          },
+          "415": {
+            "$ref": "#/components/responses/MediaError415"
+          },
+          "429": {
+            "$ref": "#/components/responses/MediaError429"
+          },
+          "500": {
+            "$ref": "#/components/responses/MediaError500"
+          },
+          "502": {
+            "$ref": "#/components/responses/MediaError502"
+          },
+          "504": {
+            "$ref": "#/components/responses/MediaError504"
           }
         }
       }

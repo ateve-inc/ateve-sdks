@@ -1,10 +1,18 @@
 import { ApiConnectionError, ConcurrencyLimitError } from "./errors";
 import type { AteveOptions, RequestOptions } from "./options";
-import type { SearchRequest, SearchResponse } from "./types";
+import type {
+  ImageSearchRequest,
+  ImageSearchResponse,
+  VideoSearchRequest,
+  VideoSearchResponse,
+  SearchRequest,
+  SearchResponse,
+} from "./types";
 import { resolveConfig, validateTimeout } from "./internal/config";
 import { createTransport } from "./internal/transport";
 import { toWire } from "./internal/serialization";
-import { validateRequest } from "./internal/validation";
+import { imageSearchResponse, searchResponse, videoSearchResponse } from "./internal/response";
+import { mediaBody, validateRequest } from "./internal/validation";
 
 export const VERSION = "0.2.3";
 export const DEFAULT_BASE_URL = "https://api.ateve.ai";
@@ -35,6 +43,42 @@ export default class Ateve {
 
   async search(request: SearchRequest, options: RequestOptions = {}): Promise<SearchResponse> {
     validateRequest(request);
+    return this.#send("/v1/search", toWire(request), options, "SearchResponse", searchResponse);
+  }
+
+  async searchImages(
+    request: ImageSearchRequest,
+    options: RequestOptions = {},
+  ): Promise<ImageSearchResponse> {
+    return this.#send(
+      "/v1/images",
+      mediaBody(request),
+      options,
+      "ImageSearchResponse",
+      imageSearchResponse,
+    );
+  }
+
+  async searchVideos(
+    request: VideoSearchRequest,
+    options: RequestOptions = {},
+  ): Promise<VideoSearchResponse> {
+    return this.#send(
+      "/v1/videos",
+      mediaBody(request),
+      options,
+      "VideoSearchResponse",
+      videoSearchResponse,
+    );
+  }
+
+  async #send<T>(
+    path: string,
+    body: Record<string, unknown>,
+    options: RequestOptions,
+    model: string,
+    parse: (value: unknown) => T,
+  ): Promise<T> {
     if (this.maxConcurrentRequests > 0 && this.#inFlight >= this.maxConcurrentRequests) {
       throw new ConcurrencyLimitError(this.maxConcurrentRequests);
     }
@@ -50,7 +94,7 @@ export default class Ateve {
 
     this.#inFlight += 1;
     try {
-      return await this.#transport(toWire(request), { ...options, timeoutMs });
+      return await this.#transport(path, body, { ...options, timeoutMs }, model, parse);
     } finally {
       this.#inFlight -= 1;
     }

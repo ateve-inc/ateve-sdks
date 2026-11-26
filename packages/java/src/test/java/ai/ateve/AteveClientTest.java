@@ -11,6 +11,8 @@ import ai.ateve.errors.ServerException;
 import ai.ateve.internal.Json;
 import ai.ateve.models.ContentFormat;
 import ai.ateve.models.ContentOptions;
+import ai.ateve.models.ImageSearchRequest;
+import ai.ateve.models.VideoSearchRequest;
 import ai.ateve.models.LocaleSettings;
 import ai.ateve.models.SearchRequest;
 import ai.ateve.models.SearchResponse;
@@ -61,6 +63,29 @@ class AteveClientTest {
                 .baseUrl(api.baseUrl())
                 .timeout(Duration.ofSeconds(5))
                 .build();
+    }
+
+    @Test
+    void mediaSearchUsesDedicatedRoutesAndTypes() throws Exception {
+        try (MockApi images = new MockApi("/v1/images");
+             MockApi videos = new MockApi("/v1/videos")) {
+            images.enqueue(200, Fixtures.load("images-response.json"));
+            videos.enqueue(200, Fixtures.load("videos-response.json"));
+            AteveClient imageClient = AteveClient.builder().baseUrl(images.baseUrl()).apiKey("test").build();
+            AteveClient videoClient = AteveClient.builder().baseUrl(videos.baseUrl()).apiKey("test").build();
+            var imageRequest = ImageSearchRequest.builder().query("Webb").build();
+            var videoRequest = VideoSearchRequest.builder().query("Webb").maxResults(2).build();
+            assertEquals("https://example.org/webb", imageClient.searchImages(imageRequest).results().get(0).hostPageUrl());
+            assertNull(imageClient.searchImagesAsync(imageRequest).get().results().get(1).publishedAt());
+            assertEquals(180, videoClient.searchVideosAsync(videoRequest).get().results().get(0).durationSeconds());
+            var embedded = videoClient.searchVideos(videoRequest).results().get(1);
+            assertNull(embedded.url());
+            assertEquals("https://example.org/embed/mirror", embedded.embeddingUrl());
+            assertEquals("{\"query\":\"Webb\"}", images.receivedBodies.get(0));
+            assertTrue(videos.receivedBodies.get(0).contains("\"max_results\":2"));
+            assertThrows(IllegalArgumentException.class, () -> ImageSearchRequest.builder().query(" ").build());
+            assertThrows(IllegalArgumentException.class, () -> VideoSearchRequest.builder().query("x").maxResults(11).build());
+        }
     }
 
     @Test

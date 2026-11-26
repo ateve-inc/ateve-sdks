@@ -2,11 +2,17 @@
   "src/main/java/ai/ateve/models/ContentFormat.java",
   "src/main/java/ai/ateve/models/ContentOptions.java",
   "src/main/java/ai/ateve/models/ImageItem.java",
+  "src/main/java/ai/ateve/models/ImageSearchRequest.java",
+  "src/main/java/ai/ateve/models/ImageSearchResponse.java",
+  "src/main/java/ai/ateve/models/ImageSearchResult.java",
   "src/main/java/ai/ateve/models/LocaleSettings.java",
   "src/main/java/ai/ateve/models/QueryInfo.java",
   "src/main/java/ai/ateve/models/SearchRequest.java",
   "src/main/java/ai/ateve/models/SearchResponse.java",
   "src/main/java/ai/ateve/models/SearchResult.java",
   "src/main/java/ai/ateve/models/TextOptions.java",
-  "src/main/java/ai/ateve/models/UserLocation.java"
+  "src/main/java/ai/ateve/models/UserLocation.java",
+  "src/main/java/ai/ateve/models/VideoSearchRequest.java",
+  "src/main/java/ai/ateve/models/VideoSearchResponse.java",
+  "src/main/java/ai/ateve/models/VideoSearchResult.java"
 ]

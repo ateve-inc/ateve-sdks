@@ -1,15 +1,18 @@
 import { ofetch } from "ofetch";
 import { ApiConnectionError, ApiResponseError } from "../errors";
 import type { RequestOptions } from "../options";
-import type { SearchResponse } from "../types";
 import type { ClientConfig } from "./config";
 import { connectionError, mapApiError } from "./http-errors";
 import { BodyLimitExceededError, decodeJson, readLimited } from "./response-body";
-import { searchResponse } from "./response";
 
-function responseError(baseUrl: string, response: Response, cause: unknown): ApiResponseError {
+function responseError(
+  baseUrl: string,
+  response: Response,
+  model: string,
+  cause: unknown,
+): ApiResponseError {
   const requestId = response.headers.get("X-Request-Id");
-  return new ApiResponseError(`Response from ${baseUrl} could not be decoded as SearchResponse`, {
+  return new ApiResponseError(`Response from ${baseUrl} could not be decoded as ${model}`, {
     statusCode: response.status,
     ...(requestId !== null && { requestId }),
     baseUrl,
@@ -17,13 +20,7 @@ function responseError(baseUrl: string, response: Response, cause: unknown): Api
   });
 }
 
-export function createTransport(
-  config: ClientConfig,
-  userAgent: string,
-): (
-  body: Record<string, unknown>,
-  options: RequestOptions & { timeoutMs: number },
-) => Promise<SearchResponse> {
+export function createTransport(config: ClientConfig, userAgent: string) {
   const { baseUrl, maxResponseBytes } = config;
   const fetch = ofetch.create(
     {
@@ -53,25 +50,17 @@ export function createTransport(
             { baseUrl, requestMayHaveBeenSent: true, cause },
           );
         }
-        let decoded: unknown;
-        try {
-          decoded = decodeJson(body);
-        } catch (cause) {
-          if (response.ok) {
-            throw responseError(baseUrl, response, cause);
-          }
-        }
         if (response.ok) {
-          try {
-            response._data = searchResponse(decoded);
-          } catch (cause) {
-            throw responseError(baseUrl, response, cause);
-          }
+          response._data = body;
         } else {
-          response._data = decoded;
+          try {
+            response._data = decodeJson(body);
+          } catch {
+            response._data = undefined;
+          }
           // ofetch's onResponseError handles 4xx/5xx; manual redirects also fail.
           if (response.status < 400 || response.status >= 600) {
-            throw mapApiError(response, decoded);
+            throw mapApiError(response, response._data);
           }
         }
       },
@@ -82,7 +71,13 @@ export function createTransport(
     { fetch: config.fetch },
   );
 
-  return async (body, options) => {
+  return async function send<T>(
+    path: string,
+    body: Record<string, unknown>,
+    options: RequestOptions & { timeoutMs: number },
+    model: string,
+    parse: (value: unknown) => T,
+  ): Promise<T> {
     // Keep the deadline active through streamed reading and response decoding.
     const controller = new AbortController();
     const signal = options.signal
@@ -93,7 +88,12 @@ export function createTransport(
       options.timeoutMs,
     );
     try {
-      return await fetch<SearchResponse>("/v1/search", { method: "POST", body, signal });
+      const response = await fetch.raw<Uint8Array>(path, { method: "POST", body, signal });
+      try {
+        return parse(decodeJson(response._data!));
+      } catch (cause) {
+        throw responseError(baseUrl, response, model, cause);
+      }
     } finally {
       clearTimeout(timer);
     }

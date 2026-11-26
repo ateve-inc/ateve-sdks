@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { validateAgainstContract } from "./validation.ts";
 for (const [fixture, model] of [
+  ["images-response", "ImageSearchResponse"],
+  ["videos-response", "VideoSearchResponse"],
   ["golden-request", "SearchRequest"],
   ["default-request", "SearchRequest"],
   ["golden-response", "SearchResponse"],

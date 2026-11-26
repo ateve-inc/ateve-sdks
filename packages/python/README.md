@@ -1,6 +1,6 @@
 # Ateve Python SDK
 
-Official typed client for `POST /v1/search`. Requires Python 3.11+.
+Official typed client for Ateve web, image and video search. Requires Python 3.11+.
 
 ## Install
 
@@ -53,7 +53,14 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 `RateLimitError` preserves `retry_after_seconds` and `limit_scope`; retry
 decisions remain caller-owned.
 
-## Search contract limits
+## Images Search and Videos Search
+
+| Native SDK feature | Status   |
+| ------------------ | -------- |
+| Images Search      | Released |
+| Videos Search      | Released |
+
+## Web Search limits
 
 Use `max_results` to set the maximum number of results (1–100, default 10).
 `limit` and `offset` have been removed. Both synchronous and asynchronous
