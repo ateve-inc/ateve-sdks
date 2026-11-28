@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.4.1 — 2026-11-28
+## 0.4.2 — 2026-11-28
 
 - Correct the public product name to **Decisions API** in the SDK documentation,
   OpenAPI contract and model descriptions.
 - Update workspace development dependencies and the pnpm lockfile.
+- Pin pnpm 12.23.0 so clean CI checkouts use consistent skill ignore rules.
 
 ## 0.4.0 — 2026-11-28
 

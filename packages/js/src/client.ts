@@ -20,7 +20,7 @@ import { imageSearchResponse, searchResponse, videoSearchResponse } from "./inte
 import { decisionResponse, fetchResponse, listModelsResponse } from "./internal/content-response";
 import { mediaBody, validateRequest } from "./internal/validation";
 
-export const VERSION = "0.4.1";
+export const VERSION = "0.4.2";
 export const DEFAULT_BASE_URL = "https://api.ateve.ai";
 export const DEFAULT_TIMEOUT_MS = 60_000;
 export const DEFAULT_MAX_RESPONSE_BYTES: number = 32 * 1024 * 1024;
