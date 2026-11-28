@@ -13,6 +13,8 @@ export interface ApiErrorOptions {
   param?: string;
   type?: string;
   docUrl?: string;
+  details?: Record<string, unknown>;
+  retryAfterSeconds?: number;
 }
 
 export class ApiError extends AteveError {
@@ -22,6 +24,8 @@ export class ApiError extends AteveError {
   readonly param: string | undefined;
   readonly type: string | undefined;
   readonly docUrl: string | undefined;
+  readonly details: Record<string, unknown> | undefined;
+  readonly retryAfterSeconds: number | undefined;
 
   constructor(message: string, options: ApiErrorOptions) {
     super(message);
@@ -31,6 +35,8 @@ export class ApiError extends AteveError {
     this.param = options.param;
     this.type = options.type;
     this.docUrl = options.docUrl;
+    this.details = options.details;
+    this.retryAfterSeconds = options.retryAfterSeconds;
   }
 
   get isRetryable(): boolean {
@@ -44,17 +50,14 @@ export class PaymentRequiredError extends ApiError {}
 export class ServerError extends ApiError {}
 
 export interface RateLimitErrorOptions extends ApiErrorOptions {
-  retryAfterSeconds?: number;
   limitScope?: string;
 }
 
 export class RateLimitError extends ApiError {
-  readonly retryAfterSeconds: number | undefined;
   readonly limitScope: string | undefined;
 
   constructor(message: string, options: RateLimitErrorOptions) {
     super(message, options);
-    this.retryAfterSeconds = options.retryAfterSeconds;
     this.limitScope = options.limitScope;
   }
 }

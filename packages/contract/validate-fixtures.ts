@@ -3,6 +3,10 @@ import { validateAgainstContract } from "./validation.ts";
 for (const [fixture, model] of [
   ["images-response", "ImageSearchResponse"],
   ["videos-response", "VideoSearchResponse"],
+  ["fetch-response", "FetchResponse"],
+  ["decision-request", "DecisionRequest"],
+  ["decision-response", "DecisionResponse"],
+  ["models-response", "ListModelsResponse"],
   ["golden-request", "SearchRequest"],
   ["default-request", "SearchRequest"],
   ["golden-response", "SearchResponse"],

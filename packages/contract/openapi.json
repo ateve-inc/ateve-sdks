@@ -1,10 +1,17 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Ateve Search API — SDK contract",
+    "title": "Ateve API — SDK contract",
     "version": "0.3.0",
     "description": "Search request and response models aligned with live API probes on October 9, 2026 and the October 26, 2026 highlights update. Response text uses the text field for both plain text and Markdown, and may be null when extraction fails."
   },
+  "tags": [
+    { "name": "Fetch API", "description": "Read the title and Markdown content of a page URL." },
+    {
+      "name": "Decision API",
+      "description": "Evaluate structured questions and discover supported models."
+    }
+  ],
   "servers": [
     {
       "url": "https://api.ateve.ai"
@@ -288,6 +295,10 @@
           },
           "doc_url": {
             "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "additionalProperties": true
@@ -486,6 +497,308 @@
         },
         "additionalProperties": true,
         "required": ["id", "created", "latency_ms", "query", "results"]
+      },
+      "FetchRequest": {
+        "type": "object",
+        "x-sdk-kind": "request",
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192,
+            "description": "An HTTP(S) URL with a hostname and without a username or password."
+          }
+        },
+        "additionalProperties": false,
+        "required": ["url"]
+      },
+      "FetchResponse": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Page title, or the empty string when unavailable."
+          },
+          "content": {
+            "type": "string",
+            "description": "Extracted page content in Markdown."
+          }
+        },
+        "additionalProperties": true,
+        "required": ["title", "content"]
+      },
+      "ChoiceQuestion": {
+        "type": "object",
+        "x-sdk-kind": "request",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "choice"
+          },
+          "instructions": {
+            "type": ["string", "object", "array", "null"],
+            "maxLength": 8192
+          },
+          "criteria": {
+            "type": "object",
+            "additionalProperties": {},
+            "minProperties": 2,
+            "maxProperties": 255
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "criteria"]
+      },
+      "ScoreQuestion": {
+        "type": "object",
+        "x-sdk-kind": "request",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "score"
+          },
+          "instructions": {
+            "type": ["string", "object", "array", "null"],
+            "maxLength": 8192
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "type": ["string", "object", "array"]
+            },
+            "minItems": 1,
+            "maxItems": 10
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "criteria"]
+      },
+      "NoulQuestion": {
+        "type": "object",
+        "x-sdk-kind": "request",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "noul"
+          },
+          "instructions": {
+            "type": ["string", "object", "array", "null"],
+            "maxLength": 8192
+          },
+          "criteria": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "object", "array", "null"]
+            },
+            "propertyNames": {
+              "enum": ["false", "true"]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type"]
+      },
+      "DecisionQuestion": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ChoiceQuestion"
+          },
+          {
+            "$ref": "#/components/schemas/ScoreQuestion"
+          },
+          {
+            "$ref": "#/components/schemas/NoulQuestion"
+          }
+        ],
+        "x-sdk-kind": "request"
+      },
+      "ChoiceAnswer": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "choice"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "probabilities": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": true,
+        "required": ["type", "choice", "probabilities", "confidence"]
+      },
+      "ScoreAnswer": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "score"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "probabilities": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "legend": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "object", "array"]
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": ["type", "score", "probabilities", "confidence", "legend"]
+      },
+      "NoulAnswer": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "noul"
+          },
+          "noul": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": true,
+        "required": ["type", "noul"]
+      },
+      "DecisionAnswer": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ChoiceAnswer"
+          },
+          {
+            "$ref": "#/components/schemas/ScoreAnswer"
+          },
+          {
+            "$ref": "#/components/schemas/NoulAnswer"
+          }
+        ],
+        "x-sdk-kind": "response"
+      },
+      "DecisionRequest": {
+        "type": "object",
+        "x-sdk-kind": "request",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model ID or alias. The server defaults to ateve-jev-v1."
+          },
+          "state": {
+            "type": ["string", "object", "array"]
+          },
+          "questions": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DecisionQuestion"
+            },
+            "minProperties": 1,
+            "maxProperties": 32
+          }
+        },
+        "additionalProperties": false,
+        "required": ["state", "questions"]
+      },
+      "DecisionUsage": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "output_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Always zero for Decision API responses."
+          }
+        },
+        "additionalProperties": true,
+        "required": ["input_tokens", "output_tokens"]
+      },
+      "DecisionResponse": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DecisionAnswer"
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/DecisionUsage"
+          }
+        },
+        "additionalProperties": true,
+        "required": ["model", "answers", "usage"]
+      },
+      "ModelInfo": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "release_date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": true,
+        "required": ["name", "description", "release_date"]
+      },
+      "ListModelsResponse": {
+        "type": "object",
+        "x-sdk-kind": "response",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelInfo"
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": ["models"]
       }
     },
     "responses": {
@@ -799,6 +1112,45 @@
                   }
                 }
               }
+            }
+          }
+        }
+      },
+      "ApiError": {
+        "description": "API error",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ApiRetryableError": {
+        "description": "API error",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
             }
           }
         }
@@ -1171,6 +1523,249 @@
             "$ref": "#/components/responses/MediaError504"
           }
         }
+      }
+    },
+    "/v1/fetch": {
+      "post": {
+        "tags": ["Fetch API"],
+        "summary": "Read a web page as Markdown",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "402": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "description": "Target rejected by Fetch policy (fetch_forbidden) or billing restriction",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No usable page content (fetch_content_unavailable) or unknown endpoint",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiRetryableError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "502": {
+            "$ref": "#/components/responses/ApiRetryableError"
+          },
+          "504": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        },
+        "operationId": "fetch"
+      }
+    },
+    "/v1/systemone": {
+      "post": {
+        "tags": ["Decision API"],
+        "summary": "Evaluate structured questions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (invalid_parameter) or token budget exceeded (token_budget_exceeded)",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "404": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "405": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "413": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiRetryableError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "502": {
+            "description": "Inference service unavailable (service_unavailable)",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        },
+        "operationId": "decide"
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "tags": ["Decision API"],
+        "summary": "List supported model IDs and aliases",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModelsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "429": {
+            "$ref": "#/components/responses/ApiRetryableError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "502": {
+            "$ref": "#/components/responses/ApiRetryableError"
+          },
+          "504": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        },
+        "operationId": "listModels"
       }
     }
   }

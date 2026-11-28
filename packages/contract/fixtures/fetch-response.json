@@ -1,0 +1,4 @@
+{
+  "title": "",
+  "content": "# Example\n\n| Part | Value |\n| --- | --- |\n| URL | Example |\n\n```js\nconst example = true;\n```\n"
+}

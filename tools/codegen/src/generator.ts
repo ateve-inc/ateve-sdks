@@ -13,6 +13,22 @@ const camel = (name: string): string =>
   name.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase());
 const typeOf = (schema: Schema): string =>
   (Array.isArray(schema.type) ? schema.type.find((type) => type !== "null") : schema.type) ?? "";
+const refName = (schema: Schema): string => schema.$ref!.split("/").at(-1)!;
+const isJson = (schema: Schema): boolean => Object.keys(schema).length === 0;
+function isStructuredUnion(schema: Schema): boolean {
+  if (!Array.isArray(schema.type)) return false;
+  const types = new Set(schema.type.filter((type) => type !== "null"));
+  return (
+    types.size === 3 &&
+    types.has("string") &&
+    types.has("object") &&
+    types.has("array") &&
+    schema.type.length === (schema.type.includes("null") ? 4 : 3)
+  );
+}
+const mapValues = (schema: Schema): Schema | undefined =>
+  typeof schema.additionalProperties === "object" ? schema.additionalProperties : undefined;
+const literals = (values: string[]): string[] => values.map((value) => JSON.stringify(value));
 
 function template(file: string, context: Record<string, unknown>): string {
   const absolute = path.join(templates, file);
@@ -42,7 +58,10 @@ const keywords = new Set([
   "properties",
   "required",
   "items",
+  "oneOf",
+  "const",
   "additionalProperties",
+  "propertyNames",
   "enum",
   "format",
   "description",
@@ -52,6 +71,9 @@ const keywords = new Set([
   "minLength",
   "maxLength",
   "maxItems",
+  "minItems",
+  "minProperties",
+  "maxProperties",
   "pattern",
   "x-sdk-kind",
 ]);
@@ -67,6 +89,36 @@ export function validate(api: Contract, bindings: Bindings): void {
       throw new Error(`Invalid schema at ${location}`);
     for (const key of Object.keys(schema)) {
       if (!keywords.has(key)) throw new Error(`Unsupported keyword ${key} at ${location}`);
+    }
+    if (isJson(schema)) {
+      if (!location.endsWith(".additionalProperties"))
+        throw new Error(`Unsupported unconstrained JSON value at ${location}`);
+      return;
+    }
+    if (schema.oneOf) {
+      if (
+        location.includes(".") ||
+        Object.keys(schema).some((key) => !["oneOf", "x-sdk-kind", "description"].includes(key)) ||
+        schema.oneOf.length < 2
+      )
+        throw new Error(`Unsupported oneOf at ${location}`);
+      const tags = new Set<string>();
+      for (const member of schema.oneOf) {
+        inspect(member, `${location}.oneOf`);
+        if (!member.$ref) throw new Error(`Expected named oneOf variant at ${location}`);
+        const variant = schemas[refName(member)];
+        const tag = variant.properties?.type?.const;
+        if (
+          tag === undefined ||
+          tags.has(tag) ||
+          !variant.required?.includes("type") ||
+          !schema["x-sdk-kind"] ||
+          schema["x-sdk-kind"] !== variant["x-sdk-kind"]
+        )
+          throw new Error(`Invalid discriminated oneOf at ${location}`);
+        tags.add(tag);
+      }
+      return;
     }
     if (schema.default !== undefined) {
       const target = schema.$ref ? schemas[schema.$ref.split("/").at(-1)!] : schema;
@@ -96,12 +148,24 @@ export function validate(api: Contract, bindings: Bindings): void {
     const type = typeOf(schema);
     if (!["string", "integer", "number", "boolean", "object", "array"].includes(type))
       throw new Error(`Unsupported type at ${location}`);
-    if (Array.isArray(schema.type) && (schema.type.length !== 2 || !schema.type.includes("null")))
+    if (
+      Array.isArray(schema.type) &&
+      !isStructuredUnion(schema) &&
+      (schema.type.length !== 2 || !schema.type.includes("null"))
+    )
       throw new Error(`Unsupported union at ${location}`);
-    if (schema.format && !["date-time", "int64"].includes(schema.format))
+    if (
+      schema.const !== undefined &&
+      (schema.type !== "string" ||
+        typeof schema.const !== "string" ||
+        schema.enum ||
+        schema.default !== undefined)
+    )
+      throw new Error(`Unsupported const at ${location}`);
+    if (schema.format && !["date", "date-time", "int64"].includes(schema.format))
       throw new Error(`Unsupported format ${schema.format}`);
     if (
-      (schema.format === "date-time" && type !== "string") ||
+      (["date", "date-time"].includes(schema.format ?? "") && type !== "string") ||
       (schema.format === "int64" && type !== "integer")
     )
       throw new Error(`Invalid format at ${location}`);
@@ -110,11 +174,27 @@ export function validate(api: Contract, bindings: Bindings): void {
     if (location.includes(".") && (schema.enum || schema.properties))
       throw new Error(`Unsupported inline model at ${location}; use a named schema and $ref`);
     if (type === "array") inspect(schema.items, `${location}.items`);
-    if (
+    const values = mapValues(schema);
+    if (values) {
+      if (type !== "object" || schema.properties)
+        throw new Error(`Unsupported map value schema at ${location}`);
+      inspect(values, `${location}.additionalProperties`);
+    } else if (
       schema.additionalProperties !== undefined &&
       typeof schema.additionalProperties !== "boolean"
+    ) {
+      throw new Error(`Invalid additionalProperties at ${location}`);
+    }
+    const keys = schema.propertyNames;
+    if (
+      keys &&
+      (!values ||
+        Object.keys(keys).length !== 1 ||
+        !Array.isArray(keys.enum) ||
+        keys.enum.length === 0 ||
+        keys.enum.some((key) => typeof key !== "string"))
     )
-      throw new Error(`Unsupported map value schema at ${location}`);
+      throw new Error(`Unsupported propertyNames at ${location}`);
     for (const [name, property] of Object.entries(schema.properties ?? {}))
       inspect(property, `${location}.${name}`);
     if (schema.required?.some((name) => !schema.properties?.[name]))
@@ -180,9 +260,19 @@ export function validate(api: Contract, bindings: Bindings): void {
 
 function tsType(schema: Schema): string {
   let result;
-  if (schema.$ref) result = schema.$ref.split("/").at(-1)!;
-  else if (schema.enum) result = schema.enum.map((value) => JSON.stringify(value)).join(" | ");
-  else if (typeOf(schema) === "array")
+  const values = mapValues(schema);
+  if (schema.$ref) result = refName(schema);
+  else if (schema.const !== undefined) result = JSON.stringify(schema.const);
+  else if (isJson(schema)) result = "JsonValue";
+  else if (isStructuredUnion(schema))
+    result = "string | { [key: string]: JsonValue } | JsonValue[]";
+  else if (schema.enum) result = literals(schema.enum).join(" | ");
+  else if (values) {
+    const keys = schema.propertyNames;
+    result = keys
+      ? `Partial<Record<${literals(keys.enum).join(" | ")}, ${tsType(values)}>>`
+      : `Record<string, ${tsType(values)}>`;
+  } else if (typeOf(schema) === "array")
     result = `(${tsType(schema.items!)})[]`.replace(/\((\w+)\)/, "$1");
   else
     result = (
@@ -194,13 +284,34 @@ function tsType(schema: Schema): string {
         object: "Record<string, unknown>",
       } as Record<string, string>
     )[typeOf(schema)];
-  return result + (Array.isArray(schema.type) ? " | null" : "");
+  return result + (schema.type?.includes("null") ? " | null" : "");
 }
 
-function pyType(schema: Schema): string {
-  if (schema.$ref) return schema.$ref.split("/").at(-1)!;
+function pyType(schema: Schema, includeNull = true): string {
+  const type = pyNonNullType(schema);
+  return includeNull && schema.type?.includes("null") ? `Optional[${type}]` : type;
+}
+
+function pyNonNullType(schema: Schema): string {
+  if (schema.$ref) return refName(schema);
+  if (schema.const !== undefined) return `Literal[${JSON.stringify(schema.const)}]`;
+  if (isJson(schema)) return "JsonValue";
+  if (isStructuredUnion(schema)) {
+    const text =
+      schema.maxLength === undefined
+        ? "str"
+        : `Annotated[str, Field(max_length=${schema.maxLength})]`;
+    return `Union[${text}, Dict[str, JsonValue], List[JsonValue]]`;
+  }
+  const values = mapValues(schema);
+  if (values) {
+    const keys = schema.propertyNames;
+    const key = keys ? `Literal[${literals(keys.enum).join(", ")}]` : "str";
+    return `Dict[${key}, ${pyType(values)}]`;
+  }
   if (typeOf(schema) === "array") return `List[${pyType(schema.items!)}]`;
   if (schema.format === "date-time") return "datetime";
+  if (schema.format === "date") return "date";
   return (
     {
       string: "str",
@@ -212,8 +323,22 @@ function pyType(schema: Schema): string {
   )[typeOf(schema)];
 }
 
+function pythonField(field: string, type: string, defaultValue: string): string {
+  const declaration = `    ${field}: ${type}${defaultValue}`;
+  if (declaration.length <= 100) return declaration;
+  const split = type.indexOf(", ");
+  const annotation =
+    type.length <= 92 || split === -1
+      ? `        ${type}`
+      : `        ${type.slice(0, split + 1)}\n        ${type.slice(split + 2)}`;
+  return `    ${field}: (\n${annotation}\n    )${defaultValue}`;
+}
+
 function javaType(schema: Schema): string {
-  if (schema.$ref) return schema.$ref.split("/").at(-1)!;
+  if (schema.$ref) return refName(schema);
+  if (isJson(schema) || isStructuredUnion(schema)) return "Object";
+  const values = mapValues(schema);
+  if (values) return `Map<String, ${javaType(values)}>`;
   if (typeOf(schema) === "array") return `List<${javaType(schema.items!)}>`;
   if (schema.format === "date-time") return "Instant";
   if (schema.format === "int64") return "Long";
@@ -232,16 +357,65 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
   validate(api, bindings);
   const output: GeneratedModels = { js: {}, python: {}, java: {} };
   const tsModels: string[] = [];
+  const variants = new Map<string, string>();
   const propertyTypes = Object.entries(api.components.schemas)
     .filter(([name]) => bindings.models?.[name]?.generate !== false)
-    .flatMap(([, schema]) => Object.values(schema.properties ?? {}).map(pyType));
-  const typingImports = ["Any", "Dict", "List", "Optional"].filter(
-    (name) =>
-      name === "Optional" || propertyTypes.some((type) => new RegExp(`\\b${name}\\b`).test(type)),
+    .flatMap(([, schema]) =>
+      Object.values(schema.properties ?? {}).map((property) => pyType(property)),
+    );
+  const compositions = Object.entries(api.components.schemas).filter(
+    ([name, schema]) => schema.oneOf && bindings.models?.[name]?.generate !== false,
   );
-  const pyModels = [template("python/preamble.tpl", { typingImports: typingImports.join(", ") })];
+  for (const [name, schema] of compositions) {
+    for (const member of schema.oneOf!) variants.set(refName(member), name);
+  }
+  const hasJsonValue = propertyTypes.some((type) => type.includes("JsonValue"));
+  const typingImports = ["Annotated", "Any", "Dict", "List", "Literal", "Optional", "Union"].filter(
+    (name) =>
+      name === "Optional" ||
+      (compositions.length > 0 && ["Annotated", "Union"].includes(name)) ||
+      propertyTypes.some((type) => new RegExp(`\\b${name}\\b`).test(type)),
+  );
+  const pyModels = [
+    template("python/preamble.tpl", {
+      typingImports: typingImports.join(", "),
+      jsonValueImport: hasJsonValue ? ", JsonValue" : "",
+    }),
+  ];
+  if (hasJsonValue) {
+    tsModels.push(
+      `export type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];`,
+    );
+  }
   for (const [name, schema] of Object.entries(api.components.schemas)) {
     if (bindings.models?.[name]?.generate === false) continue;
+    if (schema.oneOf) {
+      const members = schema.oneOf.map(refName);
+      tsModels.push(`export type ${name} = ${members.join(" | ")};`);
+      pyModels.push(
+        `${name} = Annotated[\n    Union[${members.join(", ")}], Field(discriminator="type")\n]`,
+      );
+      output.java[`src/main/java/ai/ateve/models/${name}.java`] =
+        "// " +
+        banner +
+        "\n" +
+        template("java/union.tpl", {
+          name,
+          jackson:
+            schema["x-sdk-kind"] === "response"
+              ? template("java/union-jackson.tpl", {
+                  variants: members
+                    .map((variant) => {
+                      const tag = api.components.schemas[variant].properties!.type.const;
+                      return `    @JsonSubTypes.Type(value = ${variant}.class, name = ${JSON.stringify(tag)})`;
+                    })
+                    .join(",\n"),
+                }) + "\n"
+              : "",
+        }) +
+        "\n";
+      continue;
+    }
     if (schema.enum) {
       tsModels.push(`export type ${name} = ${tsType(schema)};`);
       pyModels.push(
@@ -294,8 +468,8 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
               const options = bindings.fields?.[`${name}.${field}`]?.python ?? {};
               const required = options.required ?? schema.required?.includes(field) ?? false;
               const factory = options.defaultFactory;
-              const nullable = !required || Array.isArray(prop.type);
-              const type = nullable && !factory ? `Optional[${pyType(prop)}]` : pyType(prop);
+              const nullable = !required || prop.type?.includes("null");
+              const type = nullable && !factory ? `Optional[${pyType(prop, false)}]` : pyType(prop);
               const args: string[] = [];
               if (factory) args.push(`default_factory=${factory}`);
               else if (!required) {
@@ -317,10 +491,13 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
                   maximum: "le",
                   minLength: "min_length",
                   maxLength: "max_length",
+                  minItems: "min_length",
                   maxItems: "max_length",
+                  minProperties: "min_length",
+                  maxProperties: "max_length",
                   pattern: "pattern",
                 })) {
-                  if (prop[keyword] !== undefined)
+                  if (prop[keyword] !== undefined && !isStructuredUnion(prop))
                     args.push(`${argument}=${JSON.stringify(prop[keyword])}`);
                 }
               }
@@ -331,7 +508,7 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
                   : !required
                     ? " = None"
                     : "";
-              return `    ${field}: ${type}${value}`;
+              return pythonField(field, type, value);
             })
             .join("\n") || "    pass",
         hook: template(`python/${name}.tpl`, {}),
@@ -349,10 +526,18 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
     for (const [field, prop] of entries) {
       const sdkField = camel(field);
       const type = javaType(prop);
+      const literal = isRequest && prop.const !== undefined;
+      const structured = isStructuredUnion(prop);
+      const typedMap = mapValues(prop);
+      const deepCopy =
+        structured ||
+        (typedMap && (isJson(typedMap) || isStructuredUnion(typedMap))) ||
+        (prop.items && isStructuredUnion(prop.items));
       if (type.includes("List<")) imports.add("java.util.List");
       if (type.includes("Map<")) imports.add("java.util.Map");
-      if (!isRequest && (type.startsWith("List<") || type.startsWith("Map<")))
+      if (!isRequest && !deepCopy && (type.startsWith("List<") || type.startsWith("Map<")))
         imports.add("java.util.Collections");
+      if (deepCopy) imports.add("ai.ateve.internal.JsonValues");
       let annotation = "";
       if (type === "Instant") {
         imports.add("java.time.Instant");
@@ -369,26 +554,43 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
           ? "Map"
           : undefined;
       assignments.push(
-        `        this.${sdkField} = ${collection ? `b.${sdkField} == null ? null : ${collection}.copyOf(b.${sdkField})` : `b.${sdkField}`};`,
+        `        this.${sdkField} = ${
+          literal
+            ? JSON.stringify(prop.const)
+            : deepCopy
+              ? `JsonValues.${structured ? "copyContent" : "copy" + collection}(b.${sdkField})`
+              : collection
+                ? `b.${sdkField} == null ? null : ${collection}.copyOf(b.${sdkField})`
+                : `b.${sdkField}`
+        };`,
       );
       const getter =
-        !isRequest && collection
-          ? `${sdkField} == null ? null : Collections.unmodifiable${collection}(${sdkField})`
-          : sdkField;
+        !isRequest && deepCopy
+          ? `JsonValues.copy${collection}(${sdkField})`
+          : !isRequest && collection
+            ? `${sdkField} == null ? null : Collections.unmodifiable${collection}(${sdkField})`
+            : sdkField;
       accessors.push(`    public ${type} ${sdkField}() { return ${getter}; }`);
+      context[field] = { ...prop, patternJava: prop.pattern ? JSON.stringify(prop.pattern) : "" };
+      if (literal) continue;
       const defaultValue =
         prop.default === undefined
           ? ""
           : ` = ${prop.$ref ? `${type}.${String(prop.default).toUpperCase()}` : JSON.stringify(prop.default) + (type === "Long" ? "L" : type === "Double" ? "d" : "")}`;
-      builderFields.push(`        private ${type} ${sdkField}${defaultValue};`);
+      const setterType =
+        isRequest && typedMap
+          ? type.replace(/, (.+)>$/, ", ? extends $1>")
+          : isRequest && deepCopy && collection === "List"
+            ? "List<?>"
+            : type;
+      builderFields.push(`        private ${setterType} ${sdkField}${defaultValue};`);
       // Preserve existing parameter names on domain-list builder methods.
       const parameter = ["include_domains", "exclude_domains"].includes(field)
         ? "domains"
         : sdkField;
       setters.push(
-        `        public Builder ${sdkField}(${type} ${parameter}) { this.${sdkField} = ${parameter}; return this; }`,
+        `        public Builder ${sdkField}(${setterType} ${parameter}) { this.${sdkField} = ${parameter}; return this; }`,
       );
-      context[field] = { ...prop, patternJava: prop.pattern ? JSON.stringify(prop.pattern) : "" };
     }
     output.java[`src/main/java/ai/ateve/models/${name}.java`] =
       "// " +
@@ -396,6 +598,7 @@ export function render(api: Contract, bindings: Bindings): GeneratedModels {
       "\n" +
       template(`java/${isRequest ? "request" : "response"}.tpl`, {
         name,
+        implements: variants.has(name) ? ` implements ${variants.get(name)}` : "",
         description: (schema.description ?? name).replaceAll("*/", "* /"),
         imports: [...imports]
           .sort()

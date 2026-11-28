@@ -1,6 +1,6 @@
 # Ateve JavaScript / TypeScript SDK
 
-Official zero-runtime-dependency client for Ateve web, image and video search. Requires Node.js
+Official client for the Ateve API. Requires Node.js
 22+ and ships ESM, CommonJS, and TypeScript declarations.
 
 ## Install
@@ -64,6 +64,36 @@ import type { SearchRequest, SearchResponse } from "ateve";
 | ------------------ | -------- |
 | Images Search      | Released |
 | Videos Search      | Released |
+
+## Fetch API
+
+```ts
+const page = await client.fetch("https://example.com/");
+console.log(page.title, page.content);
+```
+
+`page.content` contains Markdown. The URL must use HTTP or HTTPS, include a hostname,
+contain no username or password, and be at most 8,192 characters.
+
+## Decision API
+
+```ts
+const result = await client.decisions.decide({
+  state: { amount: 75 },
+  questions: {
+    category: { type: "choice", criteria: { below: "Below 100", other: "100 or greater" } },
+    rating: { type: "score", criteria: ["Low", "Medium", "High"] },
+    belowLimit: { type: "noul", instructions: "Is the amount below 100?" },
+  },
+});
+const answer = result.answers.belowLimit;
+if (answer?.type === "noul") console.log(answer.noul);
+console.log(result.usage.inputTokens, (await client.decisions.listModels()).models);
+```
+
+Decision API accepts up to 32 questions per request. The server defaults to
+`ateve-jev-v1` when `model` is omitted. Use `client.decisions.listModels()` to
+discover supported model IDs and aliases.
 
 ## Web Search limits
 

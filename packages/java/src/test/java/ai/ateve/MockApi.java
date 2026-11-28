@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Tiny scriptable mock of POST /v1/search built on the JDK HttpServer.
+ * Tiny scriptable API mock built on the JDK HttpServer.
  * Enqueue responses; they are served in order, the last one repeating.
  */
 final class MockApi implements AutoCloseable {
@@ -36,6 +36,7 @@ final class MockApi implements AutoCloseable {
     private final List<Scripted> script = new ArrayList<>();
     private final AtomicInteger hits = new AtomicInteger();
     final List<String> receivedBodies = new ArrayList<>();
+    final List<String> receivedMethods = new ArrayList<>();
     final List<String> receivedAuthHeaders = new ArrayList<>();
     final List<String> receivedUserAgents = new ArrayList<>();
 
@@ -64,6 +65,7 @@ final class MockApi implements AutoCloseable {
                 }
                 synchronized (this) {
                     receivedBodies.add(buf.toString("UTF-8"));
+                    receivedMethods.add(exchange.getRequestMethod());
                     receivedAuthHeaders.add(exchange.getRequestHeaders().getFirst("Authorization"));
                     receivedUserAgents.add(exchange.getRequestHeaders().getFirst("User-Agent"));
                 }

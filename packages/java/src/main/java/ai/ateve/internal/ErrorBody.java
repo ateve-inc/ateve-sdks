@@ -18,6 +18,7 @@ public final class ErrorBody {
         private String param;
         private String type;
         private String docUrl;
+        private Object details;
 
         private Payload() {
         }
@@ -27,5 +28,6 @@ public final class ErrorBody {
         public String param() { return param; }
         public String type() { return type; }
         public String docUrl() { return docUrl; }
+        public Object details() { return details; }
     }
 }

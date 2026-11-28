@@ -12,9 +12,18 @@ import ai.ateve.errors.RateLimitException;
 import ai.ateve.errors.ServerException;
 import ai.ateve.internal.ErrorBody;
 import ai.ateve.internal.Json;
+import ai.ateve.models.ChoiceAnswer;
+import ai.ateve.models.DecisionAnswer;
+import ai.ateve.models.DecisionRequest;
+import ai.ateve.models.DecisionResponse;
+import ai.ateve.models.FetchRequest;
+import ai.ateve.models.FetchResponse;
 import ai.ateve.models.ImageSearchRequest;
 import ai.ateve.models.ImageSearchResponse;
+import ai.ateve.models.ListModelsResponse;
+import ai.ateve.models.NoulAnswer;
 import ai.ateve.models.QueryInfo;
+import ai.ateve.models.ScoreAnswer;
 import ai.ateve.models.VideoSearchRequest;
 import ai.ateve.models.VideoSearchResponse;
 import ai.ateve.models.SearchRequest;
@@ -32,6 +41,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -44,7 +54,7 @@ import java.util.concurrent.Flow;
 import java.util.concurrent.Semaphore;
 
 /**
- * Thread-safe client for web, image and video searches.
+ * Thread-safe client for the Ateve API.
  *
  * <pre>{@code
  * AteveClient client = AteveClient.builder().build(); // reads ATEVE_API_KEY
@@ -106,6 +116,8 @@ public final class AteveClient {
     private final URI searchUri;
     private final URI imagesUri;
     private final URI videosUri;
+    private final URI fetchUri;
+    private final DecisionClient decisions;
     private final Duration timeout;
     private final long maxResponseBytes;
     private final int maxConcurrentRequests;
@@ -119,6 +131,8 @@ public final class AteveClient {
         this.searchUri = URI.create(baseUrl + "/v1/search");
         this.imagesUri = URI.create(baseUrl + "/v1/images");
         this.videosUri = URI.create(baseUrl + "/v1/videos");
+        this.fetchUri = URI.create(baseUrl + "/v1/fetch");
+        this.decisions = new DecisionClient();
         this.timeout = builder.timeout;
         this.maxResponseBytes = builder.maxResponseBytes;
         this.maxConcurrentRequests = builder.maxConcurrentRequests;
@@ -160,6 +174,15 @@ public final class AteveClient {
 
     public VideoSearchResponse searchVideos(VideoSearchRequest request) {
         return await(searchVideosAsync(request));
+    }
+
+    public FetchResponse fetch(String url) {
+        return await(fetchAsync(url));
+    }
+
+    /** Structured decisions and model discovery for the Decision API. */
+    public DecisionClient decisions() {
+        return decisions;
     }
 
     private <T> T await(CompletableFuture<T> future) {
@@ -213,10 +236,76 @@ public final class AteveClient {
                         && r.results().stream().allMatch(item -> item != null && item.id() != null));
     }
 
+    public CompletableFuture<FetchResponse> fetchAsync(String url) {
+        return send(FetchRequest.builder().url(url).build(), fetchUri, FetchResponse.class,
+                response -> response.title() != null && response.content() != null);
+    }
+
+    /** Blocking and asynchronous Decision API operations backed by the owning client. */
+    public final class DecisionClient {
+        private final URI decisionsUri = URI.create(baseUrl + "/v1/systemone");
+        private final URI modelsUri = URI.create(baseUrl + "/v1/models");
+
+        private DecisionClient() {}
+
+        public DecisionResponse decide(DecisionRequest request) {
+            return await(decideAsync(request));
+        }
+
+        public ListModelsResponse listModels() {
+            return await(listModelsAsync());
+        }
+
+        public CompletableFuture<DecisionResponse> decideAsync(DecisionRequest request) {
+            return send(request, decisionsUri, DecisionResponse.class,
+                    response -> response.model() != null && response.answers() != null
+                            && response.answers().values().stream().allMatch(AteveClient::validAnswer)
+                            && response.usage() != null
+                            && response.usage().inputTokens() != null
+                            && response.usage().outputTokens() != null);
+        }
+
+        public CompletableFuture<ListModelsResponse> listModelsAsync() {
+            return exchange(null, modelsUri, ListModelsResponse.class,
+                    response -> response.models() != null && response.models().stream().allMatch(
+                            model -> model != null && model.name() != null
+                                    && model.description() != null && model.releaseDate() != null));
+        }
+    }
+
+    private static boolean validAnswer(DecisionAnswer answer) {
+        if (answer instanceof ChoiceAnswer) {
+            ChoiceAnswer choice = (ChoiceAnswer) answer;
+            return choice.choice() != null && validProbabilities(choice.probabilities())
+                    && isProbability(choice.confidence());
+        }
+        if (answer instanceof ScoreAnswer) {
+            ScoreAnswer score = (ScoreAnswer) answer;
+            Map<String, Object> legend = score.legend();
+            return score.score() != null && Double.isFinite(score.score())
+                    && validProbabilities(score.probabilities()) && isProbability(score.confidence())
+                    && legend != null && legend.values().stream().allMatch(
+                            level -> level instanceof String || level instanceof Map<?, ?>
+                                    || level instanceof List<?>);
+        }
+        return answer instanceof NoulAnswer && isProbability(((NoulAnswer) answer).noul());
+    }
+
+    private static boolean validProbabilities(Map<String, Double> values) {
+        return values != null && values.values().stream().allMatch(AteveClient::isProbability);
+    }
+
+    private static boolean isProbability(Double value) {
+        return value != null && value >= 0 && value <= 1;
+    }
+
     private <T> CompletableFuture<T> send(Object request, URI uri, Class<T> model,
                                            Predicate<T> valid) {
-        Objects.requireNonNull(request, "request");
+        return exchange(Objects.requireNonNull(request, "request"), uri, model, valid);
+    }
 
+    private <T> CompletableFuture<T> exchange(Object request, URI uri, Class<T> model,
+                                               Predicate<T> valid) {
         if (bulkhead != null && !bulkhead.tryAcquire()) {
             return CompletableFuture.failedFuture(new ConcurrencyLimitException(
                     "Concurrency limit reached (maxConcurrentRequests=" + maxConcurrentRequests
@@ -226,15 +315,14 @@ public final class AteveClient {
 
         final HttpRequest httpRequest;
         try {
-            byte[] body = Json.writeBytes(request);
-            httpRequest = HttpRequest.newBuilder(uri)
+            HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
                     .timeout(timeout)
                     .header("Authorization", authHeader)
-                    .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
-                    .header("User-Agent", USER_AGENT)
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-                    .build();
+                    .header("User-Agent", USER_AGENT);
+            httpRequest = (request == null ? builder.GET() : builder
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(Json.writeBytes(request)))).build();
         } catch (Throwable error) {
             releasePermit();
             rethrowIfError(error);
@@ -401,6 +489,10 @@ public final class AteveClient {
         String param = null;
         String type = null;
         String docUrl = null;
+        Map<?, ?> details = null;
+        Long retryAfter = response.headers().firstValue("Retry-After")
+                .map(AteveClient::parseRetryAfterSeconds)
+                .orElse(null);
         String message = "HTTP " + status;
         if (parsed != null) {
             if (parsed.id() != null) {
@@ -411,6 +503,9 @@ public final class AteveClient {
                 param = parsed.error().param();
                 type = parsed.error().type();
                 docUrl = parsed.error().docUrl();
+                if (parsed.error().details() instanceof Map<?, ?>) {
+                    details = (Map<?, ?>) parsed.error().details();
+                }
                 if (parsed.error().message() != null) {
                     message = parsed.error().message();
                 }
@@ -430,21 +525,18 @@ public final class AteveClient {
                             status, requestId, code, param, type, docUrl, message);
                 }
                 return new InvalidRequestException(
-                        status, requestId, code, param, type, docUrl, message);
+                        status, requestId, code, param, type, docUrl, message, details, retryAfter);
             case 429:
-                Long retryAfter = response.headers().firstValue("Retry-After")
-                        .map(AteveClient::parseRetryAfterSeconds)
-                        .orElse(null);
                 String scope = response.headers().firstValue("X-Ateve-Limit-Scope").orElse(null);
                 return new RateLimitException(
                         status, requestId, code, param, type, docUrl, message, retryAfter, scope);
             default:
                 if (status >= 500) {
                     return new ServerException(
-                            status, requestId, code, param, type, docUrl, message);
+                            status, requestId, code, param, type, docUrl, message, details, retryAfter);
                 }
                 return new InvalidRequestException(
-                        status, requestId, code, param, type, docUrl, message);
+                        status, requestId, code, param, type, docUrl, message, details, retryAfter);
         }
     }
 

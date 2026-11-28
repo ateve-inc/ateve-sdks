@@ -1,4 +1,5 @@
 export { default } from "./client";
+export type { DecisionClient } from "./client";
 export {
   DEFAULT_BASE_URL,
   DEFAULT_MAX_RESPONSE_BYTES,

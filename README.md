@@ -1,6 +1,6 @@
 # Ateve SDKs
 
-Official SDKs for Ateve web, image and video search.
+Official SDKs for the Ateve API.
 
 | SDK                     | Directory                              | Registry      | Package               |
 | ----------------------- | -------------------------------------- | ------------- | --------------------- |
@@ -37,6 +37,21 @@ curl --fail-with-body https://api-test.ateve.ai/v1/images \
 
 Use `/v1/videos` for video search. Both endpoints accept a nonblank `query` of
 up to 1,000 characters and an optional `max_results` from 1 to 10.
+
+## Fetch API
+
+`POST /v1/fetch` takes a page URL and returns its title and Markdown content.
+See the SDK examples for [JavaScript](packages/js/README.md#fetch-api),
+[Python](packages/python/README.md#fetch-api) and [Java](packages/java/README.md#fetch-api).
+
+## Decision API
+
+`POST /v1/systemone` evaluates Choice, Score and Noul questions against shared
+context. `GET /v1/models` lists the model IDs and aliases accepted in the `model` field.
+The SDK exposes both operations through `client.decisions` in JavaScript
+and Python and `client.decisions()` in Java. See the SDK examples for
+[JavaScript](packages/js/README.md#decision-api),
+[Python](packages/python/README.md#decision-api) and [Java](packages/java/README.md#decision-api).
 
 ## Development
 
@@ -148,15 +163,31 @@ Run the same check locally with `ATEVE_API_KEY` supplied through the environment
 pnpm --filter @ateve/contract live:check
 ```
 
-A successful run sends eight requests to `https://api.ateve.ai`: six to
-`/v1/search` with a limit of two results, then one each to `/v1/images` and
-`/v1/videos` with a limit of one. Each request and raw response is checked
-against the shared OpenAPI contract. The web checks also verify content defaults,
-snippets, highlights and plain/Markdown text. The media checks verify the
-echoed query and result limit. These are real, billable
-searches. Keys and response bodies are not logged or saved by the check. The
-ordinary `pnpm check` remains offline and tests the live-check failure paths
-with an injected transport.
+A successful run validates eleven requests and their raw responses against
+the shared OpenAPI contract at `https://api.ateve.ai`.
+
+- Web Search makes six requests to verify content defaults, snippets,
+  highlights and plain-text and Markdown extraction.
+- Image Search and Video Search each make one request to verify the echoed query and result limit.
+- Fetch API makes one request and checks that the Markdown content is nonempty.
+- The Decision API check submits a mixed Choice, Score and Noul request and lists the available models.
+
+Search and Fetch use billable production calls. Keys and response bodies are
+not logged or saved by the check. The ordinary `pnpm check` remains offline
+and tests live-check failure paths with an injected transport.
+
+### Test environment contract checks
+
+Set `ATEVE_TEST_API_KEY` or `ATEVE_API_KEY` to a key authorized for
+`https://api-test.ateve.ai`. This command runs the new endpoint checks
+once per route in the test environment.
+
+```bash
+pnpm --filter @ateve/contract content:check:test
+```
+
+To call the test environment from an SDK, set `ATEVE_BASE_URL` to
+`https://api-test.ateve.ai` and `ATEVE_API_KEY` to a test key.
 
 All SDKs share release versions and `v*` tags. Use the root command to update
 SDK manifests, private workspace manifests, client constants, contract

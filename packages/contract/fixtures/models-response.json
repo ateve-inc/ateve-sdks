@@ -1,0 +1,14 @@
+{
+  "models": [
+    {
+      "name": "ateve-jev-v1",
+      "description": "Default model for the Decision API",
+      "release_date": "2026-10-02"
+    },
+    {
+      "name": "jev-latest",
+      "description": "Alias for ateve-jev-v1",
+      "release_date": "2026-10-02"
+    }
+  ]
+}

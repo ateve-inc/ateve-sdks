@@ -72,7 +72,14 @@ try {
   mkdirSync(path.join(temporary, "node_modules"));
   symlinkSync(packagePath, path.join(temporary, "node_modules/ateve"), "dir");
   const consumer = `
-import Ateve, { ApiError, type ContentOptions, type SearchResponse } from "ateve";
+import Ateve, {
+  ApiError,
+  type ContentOptions,
+  type DecisionClient,
+  type DecisionResponse,
+  type ListModelsResponse,
+  type SearchResponse,
+} from "ateve";
 const content: ContentOptions = { highlights: true, text: { format: "markdown" } };
 const client = new Ateve({ apiKey: "sk_test" });
 const response: Promise<SearchResponse> = client.search({ query: "typed consumer", content });
@@ -81,6 +88,14 @@ response.then((value) => {
   const text: string | null | undefined = value.results[0]?.text;
   return { highlights, text };
 });
+const decisions: DecisionClient = client.decisions;
+const decision: Promise<DecisionResponse> = decisions.decide({
+  state: "context",
+  questions: { q: { type: "noul" } },
+});
+const models: Promise<ListModelsResponse> = decisions.listModels();
+void decision;
+void models;
 const error: Error = new ApiError("failure", { statusCode: 400 });
 // @ts-expect-error Request highlights must be boolean.
 const invalid: ContentOptions = { highlights: "true" };

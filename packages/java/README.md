@@ -1,6 +1,6 @@
 # Ateve Java SDK
 
-Official Java client for Ateve web, image and video search.
+Official Java client for the Ateve API.
 
 - Coordinates: `ai.ateve:ateve-java` · Package: `ai.ateve` · JDK 11+
 - Runtime dependency: jackson-databind only
@@ -40,6 +40,40 @@ System.out.println(response.id());
 | ------------------ | -------- |
 | Images Search      | Released |
 | Videos Search      | Released |
+
+## Fetch API
+
+```java
+import ai.ateve.models.FetchResponse;
+
+FetchResponse page = client.fetch("https://example.com/");
+System.out.println(page.content());
+```
+
+`page.content()` contains Markdown. Use `client.fetchAsync(url)` for a
+`CompletableFuture<FetchResponse>`.
+
+## Decision API
+
+```java
+import ai.ateve.models.*;
+import java.util.Map;
+
+DecisionResponse result = client.decisions().decide(DecisionRequest.builder()
+        .state(Map.of("amount", 75))
+        .questions(Map.of("below_limit", NoulQuestion.builder()
+                .instructions("Is the amount below 100?")
+                .build()))
+        .build());
+NoulAnswer answer = (NoulAnswer) result.answers().get("below_limit");
+System.out.println(answer.noul());
+System.out.println(client.decisions().listModels().models());
+```
+
+Decision API supports `ChoiceQuestion`, `ScoreQuestion` and `NoulQuestion`
+in one request. Omit `model` to use the server default.
+`client.decisions().decideAsync(request)` and
+`client.decisions().listModelsAsync()` return `CompletableFuture` values.
 
 ## Thin client semantics
 

@@ -33,7 +33,7 @@ export function createTransport(config: ClientConfig, userAgent: string) {
         options.headers.set("Authorization", `Bearer ${config.apiKey}`);
         options.headers.set("User-Agent", userAgent);
         options.headers.set("Accept", "application/json");
-        options.headers.set("Content-Type", "application/json");
+        if (options.method === "POST") options.headers.set("Content-Type", "application/json");
       },
       onRequestError({ error }) {
         throw connectionError(baseUrl, error);
@@ -73,7 +73,7 @@ export function createTransport(config: ClientConfig, userAgent: string) {
 
   return async function send<T>(
     path: string,
-    body: Record<string, unknown>,
+    body: object | undefined,
     options: RequestOptions & { timeoutMs: number },
     model: string,
     parse: (value: unknown) => T,
@@ -88,7 +88,10 @@ export function createTransport(config: ClientConfig, userAgent: string) {
       options.timeoutMs,
     );
     try {
-      const response = await fetch.raw<Uint8Array>(path, { method: "POST", body, signal });
+      const response = await fetch.raw<Uint8Array>(
+        path,
+        body === undefined ? { method: "GET", signal } : { method: "POST", body, signal },
+      );
       try {
         return parse(decodeJson(response._data!));
       } catch (cause) {

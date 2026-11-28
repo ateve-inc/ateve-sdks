@@ -19,7 +19,8 @@ public final class Json {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setDefaultPropertyInclusion(
+                    JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS))
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
             .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);

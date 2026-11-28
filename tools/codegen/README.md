@@ -10,12 +10,13 @@ type-only imports use `import type`. `pnpm --filter @ateve/codegen typecheck`
 checks scripts, generator tests and the contract fixture validator with strict
 TypeScript and `erasableSyntaxOnly`. Node does not typecheck at runtime.
 
-Supported structures: named string enums and object models, local `$ref`,
-strings, booleans, integers (`int64`), numbers, arrays, unstructured string-keyed
-maps, primitive-plus-null unions and `date-time`. Request constraints support
-minimum/maximum, string length, array maximum length and patterns. Composition,
-inline models and unsupported keywords fail explicitly; extend the generator
-and tests before using them.
+The generator supports named enums and object models, local `$ref`, primitive
+values, arrays, typed and unstructured string-keyed maps, nullable values and
+ISO dates. Request constraints include numeric bounds, string length and
+patterns, and array and map sizes. Decision API schemas use string literals, named
+`oneOf` variants with a required `type` discriminator, and flexible JSON values
+for state, instructions and criteria. Other compositions and inline models
+fail validation.
 
 Primitive and referenced string enum defaults are supported and validated
 against their types, enum values and numeric bounds. TS types document defaults;

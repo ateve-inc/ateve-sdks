@@ -1,6 +1,6 @@
 """Typed errors raised by the Ateve Python SDK."""
 
-from typing import Optional
+from typing import Any, Optional
 
 
 class AteveError(Exception):
@@ -20,6 +20,8 @@ class ApiError(AteveError):
         param: Optional[str] = None,
         error_type: Optional[str] = None,
         doc_url: Optional[str] = None,
+        details: Optional[dict[str, Any]] = None,
+        retry_after_seconds: Optional[int] = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -28,6 +30,8 @@ class ApiError(AteveError):
         self.param = param
         self.type = error_type
         self.doc_url = doc_url
+        self.details = details
+        self.retry_after_seconds = retry_after_seconds
 
     @property
     def is_retryable(self) -> bool:
@@ -66,6 +70,7 @@ class RateLimitError(ApiError):
         doc_url: Optional[str] = None,
         retry_after_seconds: Optional[int] = None,
         limit_scope: Optional[str] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         super().__init__(
             message,
@@ -75,8 +80,9 @@ class RateLimitError(ApiError):
             param=param,
             error_type=error_type,
             doc_url=doc_url,
+            details=details,
+            retry_after_seconds=retry_after_seconds,
         )
-        self.retry_after_seconds = retry_after_seconds
         self.limit_scope = limit_scope
 
 

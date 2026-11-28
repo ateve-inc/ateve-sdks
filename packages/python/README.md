@@ -1,6 +1,6 @@
 # Ateve Python SDK
 
-Official typed client for Ateve web, image and video search. Requires Python 3.11+.
+Official typed client for the Ateve API. Requires Python 3.11+.
 
 ## Install
 
@@ -59,6 +59,41 @@ decisions remain caller-owned.
 | ------------------ | -------- |
 | Images Search      | Released |
 | Videos Search      | Released |
+
+## Fetch API
+
+```python
+from ateve import Ateve
+
+with Ateve() as client:
+    page = client.fetch("https://example.com/")
+    print(page.title, page.content)
+```
+
+`page.content` contains Markdown. With `AsyncAteve`, call `await client.fetch(url)`.
+
+## Decision API
+
+```python
+from ateve import Ateve, DecisionRequest, NoulAnswer, NoulQuestion
+
+with Ateve() as client:
+    result = client.decisions.decide(DecisionRequest(
+        state={"amount": 75},
+        questions={"below_limit": NoulQuestion(
+            type="noul", instructions="Is the amount below 100?"
+        )},
+    ))
+    answer = result.answers["below_limit"]
+    if isinstance(answer, NoulAnswer):
+        print(answer.noul)
+    print(result.usage.input_tokens, client.decisions.list_models().models)
+```
+
+Decision API accepts a mix of `ChoiceQuestion`, `ScoreQuestion` and
+`NoulQuestion` in a single request. Omit `model` to use the server default.
+With `AsyncAteve`, await `client.decisions.decide(request)` and
+`client.decisions.list_models()`.
 
 ## Web Search limits
 

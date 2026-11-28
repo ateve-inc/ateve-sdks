@@ -16,7 +16,7 @@ on:
         default: ""
     secrets:
       ATEVE_API_KEY:
-        description: API key for required live contract checks on trusted runs
+        description: Production API key for required live contract checks on trusted runs
         required: false
 
 permissions:
@@ -116,7 +116,7 @@ jobs:
           node-version: "24"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Validate web, image and video search against the production API
+      - name: Validate live contracts against the production API
         env:
           ATEVE_API_KEY: ${{ secrets.ATEVE_API_KEY }}
         run: pnpm --filter @ateve/contract live:check

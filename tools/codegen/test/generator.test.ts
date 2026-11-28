@@ -58,7 +58,7 @@ test("new models are generated and exported without a duplicated model registry"
   assert.match(generated.python["src/ateve/_model_exports.py"], /"SearchMetadata"/);
   assert.match(
     generated.python["src/ateve/models.py"],
-    /from typing import Any, Dict, List, Optional/,
+    /from typing import .*\bAny, Dict, List, .*\bOptional/,
   );
   assert.match(generated.python["src/ateve/models.py"], /metadata: Optional\[Dict\[str, Any\]\]/);
   assert.ok(generated.java["src/main/java/ai/ateve/models/SearchMetadata.java"]);
@@ -117,7 +117,7 @@ test("unsupported, mistyped and out-of-range defaults fail explicitly", () => {
 
 test("unsupported structures, unresolved references and stale bindings fail closed", () => {
   const cases: [Schema, RegExp][] = [
-    [{ oneOf: [{ type: "string" }] }, /Unsupported keyword oneOf/],
+    [{ oneOf: [{ type: "string" }] }, /Unsupported oneOf/],
     [{ type: ["string", "integer"] }, /Unsupported union/],
     [{ $ref: "#/components/schemas/Missing" }, /Unresolved reference/],
   ];
@@ -135,6 +135,23 @@ test("unsupported structures, unresolved references and stale bindings fail clos
   const [otherApi, otherBindings] = loadContract();
   otherBindings.fields!["ImageItem.width"].python!.nullable = true;
   assert.throws(() => render(otherApi, otherBindings), /Unsupported Python binding/);
+});
+
+test("tagged unions and typed maps preserve Decision API variants across languages", () => {
+  const [api, bindings] = loadContract();
+  const generated = render(api, bindings);
+  assert.match(generated.js["src/types.ts"], /answers: Record<string, DecisionAnswer>/);
+  assert.match(
+    generated.js["src/types.ts"],
+    /DecisionAnswer = ChoiceAnswer \| ScoreAnswer \| NoulAnswer/,
+  );
+  assert.match(generated.python["src/ateve/models.py"], /Field\(discriminator="type"\)/);
+  assert.match(
+    generated.java["src/main/java/ai/ateve/models/DecisionAnswer.java"],
+    /value = ScoreAnswer.class, name = "score"/,
+  );
+  api.components.schemas.ScoreAnswer.properties!.type.const = "choice";
+  assert.throws(() => render(api, bindings), /Invalid discriminated oneOf at DecisionAnswer/);
 });
 
 test("read-only checking detects changed, missing and extra generated files; sync removes obsolete files", () => {

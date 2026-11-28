@@ -1,9 +1,9 @@
-"""Official Python SDK for the Ateve Search API."""
+"""Official Python SDK for the Ateve API."""
 
 from ._model_exports import *  # noqa: F403
 from ._model_exports import __all__ as _model_names
 from ._version import __version__
-from .client import AsyncAteve, Ateve
+from .client import AsyncAteve, AsyncDecisionClient, Ateve, DecisionClient
 from .errors import (
     ApiConnectionError,
     ApiError,
@@ -22,10 +22,12 @@ __all__ = _model_names + [
     "ApiError",
     "ApiResponseError",
     "AsyncAteve",
+    "AsyncDecisionClient",
     "Ateve",
     "AteveError",
     "AuthenticationError",
     "ConcurrencyLimitError",
+    "DecisionClient",
     "InvalidRequestError",
     "PaymentRequiredError",
     "RateLimitError",

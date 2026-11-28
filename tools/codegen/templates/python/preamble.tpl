@@ -1,4 +1,4 @@
-"""Pydantic request and response models for the Ateve search endpoints."""
+"""Pydantic request and response models for the Ateve API."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from enum import Enum
 from typing import {{typingImports}}
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field{{jsonValueImport}}, field_validator, model_validator
 
 
 class RequestModel(BaseModel):

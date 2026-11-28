@@ -1,4 +1,4 @@
-"""Synchronous and asynchronous Ateve Search API clients."""
+"""Synchronous and asynchronous Ateve API clients."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import os
 import threading
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any, Dict, Optional, TypeVar, Union
+from typing import Any, Dict, Optional, TypedDict, TypeVar, Union
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from ._version import __version__
 from .errors import (
     ApiConnectionError,
+    ApiError,
     ApiResponseError,
     AuthenticationError,
     ConcurrencyLimitError,
@@ -26,8 +27,13 @@ from .errors import (
 )
 from .models import (
     ContentOptions,
+    DecisionRequest,
+    DecisionResponse,
+    FetchRequest,
+    FetchResponse,
     ImageSearchRequest,
     ImageSearchResponse,
+    ListModelsResponse,
     LocaleSettings,
     RequestModel,
     ResponseModel,
@@ -159,6 +165,17 @@ def _read_json_object(body: bytes) -> Dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+class _ApiErrorOptions(TypedDict):
+    status_code: int
+    request_id: Optional[str]
+    code: Optional[str]
+    param: Optional[str]
+    error_type: Optional[str]
+    doc_url: Optional[str]
+    details: Optional[dict[str, Any]]
+    retry_after_seconds: Optional[int]
+
+
 def _map_api_error(response: httpx.Response, body: bytes) -> Exception:
     payload = _read_json_object(body)
     error = payload.get("error")
@@ -176,57 +193,33 @@ def _map_api_error(response: httpx.Response, body: bytes) -> Exception:
     error_type = raw_type if isinstance(raw_type, str) else None
     raw_doc_url = error.get("doc_url")
     doc_url = raw_doc_url if isinstance(raw_doc_url, str) else None
-    if status == 401:
-        return AuthenticationError(
-            message,
-            status_code=status,
-            request_id=request_id,
-            code=code,
-            param=param,
-            error_type=error_type,
-            doc_url=doc_url,
-        )
-    if status == 402 or (status == 403 and code in _BILLING_CODES):
-        return PaymentRequiredError(
-            message,
-            status_code=status,
-            request_id=request_id,
-            code=code,
-            param=param,
-            error_type=error_type,
-            doc_url=doc_url,
-        )
+    details = error.get("details")
+    options: _ApiErrorOptions = {
+        "status_code": status,
+        "request_id": request_id,
+        "code": code,
+        "param": param,
+        "error_type": error_type,
+        "doc_url": doc_url,
+        "details": details if isinstance(details, dict) else None,
+        "retry_after_seconds": _parse_retry_after(response.headers.get("Retry-After")),
+    }
     if status == 429:
         return RateLimitError(
             message,
-            status_code=status,
-            request_id=request_id,
-            code=code,
-            param=param,
-            error_type=error_type,
-            doc_url=doc_url,
-            retry_after_seconds=_parse_retry_after(response.headers.get("Retry-After")),
             limit_scope=response.headers.get("X-Ateve-Limit-Scope"),
+            **options,
         )
-    if status >= 500:
-        return ServerError(
-            message,
-            status_code=status,
-            request_id=request_id,
-            code=code,
-            param=param,
-            error_type=error_type,
-            doc_url=doc_url,
-        )
-    return InvalidRequestError(
-        message,
-        status_code=status,
-        request_id=request_id,
-        code=code,
-        param=param,
-        error_type=error_type,
-        doc_url=doc_url,
-    )
+    error_class: type[ApiError]
+    if status == 401:
+        error_class = AuthenticationError
+    elif status == 402 or (status == 403 and code in _BILLING_CODES):
+        error_class = PaymentRequiredError
+    elif status >= 500:
+        error_class = ServerError
+    else:
+        error_class = InvalidRequestError
+    return error_class(message, **options)
 
 
 def _request_may_have_been_sent(error: httpx.HTTPError) -> bool:
@@ -268,9 +261,9 @@ class _BaseAteve:
         self._headers = {
             "Authorization": f"Bearer {_require_api_key(api_key)}",
             "Accept": "application/json",
-            "Content-Type": "application/json",
             "User-Agent": USER_AGENT,
         }
+        self._json_headers = {**self._headers, "Content-Type": "application/json"}
         self._closed = False
 
     def _ensure_open(self) -> None:
@@ -361,18 +354,31 @@ class Ateve(_BaseAteve):
         request = _media_request(VideoSearchRequest, query, max_results)
         return self._send("/v1/videos", request, VideoSearchResponse)
 
+    def fetch(self, url: str) -> FetchResponse:
+        self._ensure_open()
+        return self._send("/v1/fetch", FetchRequest(url=url), FetchResponse)
+
+    @property
+    def decisions(self) -> DecisionClient:
+        """Evaluate questions and list models with the Decision API."""
+        return DecisionClient(self)
+
     def _send(
-        self, path: str, request: RequestModel, model: type[_Response]
+        self, path: str, request: Optional[RequestModel], model: type[_Response]
     ) -> _Response:
         if self._bulkhead is not None and not self._bulkhead.acquire(blocking=False):
             raise ConcurrencyLimitError(self._max_concurrent_requests)
         try:
             try:
                 with self._client.stream(
-                    "POST",
+                    "GET" if request is None else "POST",
                     self._base_url + path,
-                    headers=self._headers,
-                    json=request.model_dump(mode="json", exclude_none=True),
+                    headers=self._headers if request is None else self._json_headers,
+                    json=(
+                        request.model_dump(mode="json", exclude_none=True)
+                        if request is not None
+                        else None
+                    ),
                     timeout=self._timeout,
                     follow_redirects=False,
                 ) as response:
@@ -495,8 +501,17 @@ class AsyncAteve(_BaseAteve):
         request = _media_request(VideoSearchRequest, query, max_results)
         return await self._send("/v1/videos", request, VideoSearchResponse)
 
+    async def fetch(self, url: str) -> FetchResponse:
+        self._ensure_open()
+        return await self._send("/v1/fetch", FetchRequest(url=url), FetchResponse)
+
+    @property
+    def decisions(self) -> AsyncDecisionClient:
+        """Evaluate questions and list models with the Decision API."""
+        return AsyncDecisionClient(self)
+
     async def _send(
-        self, path: str, request: RequestModel, model: type[_Response]
+        self, path: str, request: Optional[RequestModel], model: type[_Response]
     ) -> _Response:
         if (
             self._max_concurrent_requests > 0
@@ -507,10 +522,14 @@ class AsyncAteve(_BaseAteve):
         try:
             try:
                 async with self._client.stream(
-                    "POST",
+                    "GET" if request is None else "POST",
                     self._base_url + path,
-                    headers=self._headers,
-                    json=request.model_dump(mode="json", exclude_none=True),
+                    headers=self._headers if request is None else self._json_headers,
+                    json=(
+                        request.model_dump(mode="json", exclude_none=True)
+                        if request is not None
+                        else None
+                    ),
                     timeout=self._timeout,
                     follow_redirects=False,
                 ) as response:
@@ -562,3 +581,33 @@ class AsyncAteve(_BaseAteve):
 
     async def __aexit__(self, exc_type: object, exc: object, traceback: object) -> None:
         await self.aclose()
+
+
+class DecisionClient:
+    """Synchronous Decision API operations using an existing Ateve client."""
+
+    def __init__(self, client: Ateve) -> None:
+        self._client = client
+
+    def decide(self, request: DecisionRequest) -> DecisionResponse:
+        self._client._ensure_open()
+        return self._client._send("/v1/systemone", request, DecisionResponse)
+
+    def list_models(self) -> ListModelsResponse:
+        self._client._ensure_open()
+        return self._client._send("/v1/models", None, ListModelsResponse)
+
+
+class AsyncDecisionClient:
+    """Asynchronous Decision API operations using an existing AsyncAteve client."""
+
+    def __init__(self, client: AsyncAteve) -> None:
+        self._client = client
+
+    async def decide(self, request: DecisionRequest) -> DecisionResponse:
+        self._client._ensure_open()
+        return await self._client._send("/v1/systemone", request, DecisionResponse)
+
+    async def list_models(self) -> ListModelsResponse:
+        self._client._ensure_open()
+        return await self._client._send("/v1/models", None, ListModelsResponse)

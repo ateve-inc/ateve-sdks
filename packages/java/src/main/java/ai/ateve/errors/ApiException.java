@@ -1,5 +1,9 @@
 package ai.ateve.errors;
 
+import ai.ateve.internal.JsonValues;
+
+import java.util.Map;
+
 /**
  * The server answered with a non-2xx status. Carries the parsed error body
  * ({@code {id, error:{code,message,param,type,doc_url}}}).
@@ -12,9 +16,17 @@ public class ApiException extends AteveException {
     private final String param;
     private final String type;
     private final String docUrl;
+    private final Map<String, Object> details;
+    private final Long retryAfterSeconds;
 
     public ApiException(int statusCode, String requestId, String code, String param,
                         String type, String docUrl, String message) {
+        this(statusCode, requestId, code, param, type, docUrl, message, null, null);
+    }
+
+    protected ApiException(int statusCode, String requestId, String code, String param,
+                           String type, String docUrl, String message,
+                           Map<?, ?> details, Long retryAfterSeconds) {
         super(message);
         this.statusCode = statusCode;
         this.requestId = requestId;
@@ -22,6 +34,8 @@ public class ApiException extends AteveException {
         this.param = param;
         this.type = type;
         this.docUrl = docUrl;
+        this.details = JsonValues.copyMap(details);
+        this.retryAfterSeconds = retryAfterSeconds;
     }
 
     public int statusCode() { return statusCode; }
@@ -34,6 +48,9 @@ public class ApiException extends AteveException {
     /** Error family: invalid_request_error | authentication_error | rate_limit_error | server_error. */
     public String type() { return type; }
     public String docUrl() { return docUrl; }
+    public Map<String, Object> details() { return details; }
+    /** Suggested wait from the {@code Retry-After} header, when present. */
+    public Long retryAfterSeconds() { return retryAfterSeconds; }
 
     /**
      * True for 429 / 5xx responses that a caller-owned retry policy may

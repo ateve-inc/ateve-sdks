@@ -3,7 +3,7 @@ package ai.ateve.models;
 {{imports}}
 
 /** {{description}} */
-public final class {{name}} {
+public final class {{name}}{{implements}} {
 {{constants}}
 {{fields}}
 

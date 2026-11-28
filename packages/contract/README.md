@@ -22,8 +22,9 @@ older responses. A permission-error fixture records the observed
 `validation.ts` supplies the same OpenAPI-backed validator to fixture checks and
 `pnpm --filter @ateve/contract live:check`. The live check requires `ATEVE_API_KEY`
 and validates requests plus raw successful responses before checking content
-behavior. It sends six web searches, one image search and one video search to
-`https://api.ateve.ai`, with no retries or response normalization.
+behavior. It checks each API against `https://api.ateve.ai` and validates responses
+before normalization. See the [production contract checks](../../README.md#validation-and-release)
+for coverage.
 The check writes neither keys nor response bodies to disk. CI runs it once
 outside the language matrix and injects the Actions secret only into that step.
 
@@ -34,6 +35,21 @@ response schemas. Both accept `query` and optional `max_results` (1–10).
 The server supplies the default limit when the caller omits it. The
 `images-response.json` and `videos-response.json` fixtures are synthetic examples
 used by the SDK regression tests. Run [the test-environment media check](../../README.md#image-and-video-search-in-test) to validate real responses for both routes.
+
+## Fetch API
+
+`POST /v1/fetch` accepts a single page URL. The response returns a Markdown
+body and a title. A missing title is represented by an empty string. The
+`fetch-response.json` fixture exercises newlines, a table and a fenced code block.
+
+## Decision API
+
+`POST /v1/systemone` represents Choice, Score and Noul questions and answers
+as unions keyed by `type`. The maps in
+`DecisionRequest.questions` and `DecisionResponse.answers` carry caller-defined
+IDs. The request fixture includes explicit null values inside criteria and
+state. `GET /v1/models` lists the available model IDs and aliases.
+The model-list response fixture includes a primary model and an alias.
 
 ## Changing a model
 

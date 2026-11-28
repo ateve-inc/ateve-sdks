@@ -7,7 +7,10 @@ export interface Schema {
   properties?: Record<string, Schema>;
   required?: string[];
   items?: Schema;
-  additionalProperties?: boolean;
+  additionalProperties?: boolean | Schema;
+  propertyNames?: { enum: string[] };
+  oneOf?: Schema[];
+  const?: string;
   enum?: string[];
   format?: string;
   description?: string;
@@ -17,6 +20,9 @@ export interface Schema {
   minLength?: number;
   maxLength?: number;
   maxItems?: number;
+  minItems?: number;
+  minProperties?: number;
+  maxProperties?: number;
   pattern?: string;
   "x-sdk-kind"?: "request" | "response";
 }

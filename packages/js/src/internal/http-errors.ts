@@ -37,6 +37,11 @@ function errorOptions(response: Response, payload: Record<string, unknown>): Api
   assign(options, "param", string(details.param));
   assign(options, "type", string(details.type));
   assign(options, "docUrl", string(details.doc_url));
+  const metadata = details.details;
+  if (metadata !== null && typeof metadata === "object" && !Array.isArray(metadata)) {
+    options.details = record(metadata);
+  }
+  assign(options, "retryAfterSeconds", parseRetryAfter(response.headers.get("Retry-After")));
   return options;
 }
 
@@ -55,13 +60,9 @@ export function mapApiError(response: Response, value: unknown): ApiError {
     return new PaymentRequiredError(message, options);
   }
   if (response.status === 429) {
-    const retryAfterSeconds = parseRetryAfter(response.headers.get("Retry-After"));
     const limitScope = response.headers.get("X-Ateve-Limit-Scope");
     return new RateLimitError(message, {
       ...options,
-      ...(retryAfterSeconds !== undefined && {
-        retryAfterSeconds,
-      }),
       ...(limitScope !== null && {
         limitScope,
       }),

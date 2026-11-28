@@ -1,0 +1,20 @@
+{
+  "model": "ateve-jev-v1",
+  "answers": {
+    "category": {
+      "type": "choice",
+      "choice": "below",
+      "probabilities": { "below": 0.9, "equal": 0.1 },
+      "confidence": 0.9
+    },
+    "quality": {
+      "type": "score",
+      "score": 1.85,
+      "probabilities": { "0": 0.05, "1": 0.05, "2": 0.9 },
+      "confidence": 0.9,
+      "legend": { "0": "Low", "1": { "label": "Medium" }, "2": ["High", true] }
+    },
+    "approved": { "type": "noul", "noul": 0.98 }
+  },
+  "usage": { "input_tokens": 1077, "output_tokens": 0 }
+}

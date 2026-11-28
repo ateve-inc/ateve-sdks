@@ -1,0 +1,18 @@
+{
+  "state": { "amount": 75, "signals": [true, null] },
+  "questions": {
+    "category": {
+      "type": "choice",
+      "instructions": { "task": "Compare amount with 100" },
+      "criteria": { "below": ["amount < 100", 100], "equal": null }
+    },
+    "quality": {
+      "type": "score",
+      "criteria": ["Low", { "label": "Medium" }, ["High", true]]
+    },
+    "approved": {
+      "type": "noul",
+      "criteria": { "true": null, "false": "Amount is at least 100" }
+    }
+  }
+}
