@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.81.0",
-    "@types/node": "^26.6.10",
+    "@redocly/cli": "^2.84.0",
+    "@types/node": "^26.6.11",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1"
   }
