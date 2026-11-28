@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.4.0 — 2026-11-28
+
+### Fetch API
+
+- Add `fetch(url)` to the JavaScript/TypeScript, Python and Java SDKs.
+  It returns the page title and Markdown body, preserving line breaks,
+  tables and fenced code blocks. Python and Java also support asynchronous fetches.
+
+### Decision API
+
+- Submit Choice, Score and Noul questions together through `client.decisions.decide()`
+  in JavaScript and Python, or `client.decisions().decide()` in Java. Responses
+  contain typed answers keyed by question ID and token usage.
+- Discover supported models and aliases through `listModels()` in JavaScript
+  and Java or `list_models()` in Python, under the same `decisions` namespace.
+- Preserve token-budget details and upstream retry hints in SDK API errors.
+
+### CI
+
+- Validate the new endpoints against the production API in trusted CI and release runs.
+
 ## 0.3.0 — 2026-11-26
 
 - Add image and video search to the JavaScript/TypeScript, Python and Java SDKs,
