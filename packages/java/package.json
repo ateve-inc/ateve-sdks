@@ -1,6 +1,6 @@
 {
   "name": "@ateve/java",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": true,
   "scripts": {
     "generate": "node ../../tools/codegen/src/cli.ts sync java",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3 — 2026-11-28
+
+- Use the **Image Search API** and **Video Search API** product names in the
+  JavaScript/TypeScript, Python and Java SDK READMEs. Add basic examples for
+  both APIs, including how to limit results and read their titles and URLs.
+
 ## 0.4.2 — 2026-11-28
 
 - Correct the public product name to **Decisions API** in the SDK documentation,

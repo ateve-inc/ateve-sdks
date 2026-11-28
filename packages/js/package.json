@@ -1,6 +1,6 @@
 {
   "name": "@ateve/js",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Official JavaScript and TypeScript SDK for the Ateve Search API",
   "keywords": [
     "AI",
