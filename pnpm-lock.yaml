@@ -194,12 +194,18 @@ importers:
       turbo:
         specifier: ^2.11.13
         version: 2.11.13
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
 
   packages/contract:
     devDependencies:
       '@redocly/cli':
         specifier: ^2.81.0
         version: 2.83.0
+      '@types/node':
+        specifier: ^26.6.10
+        version: 26.6.10
       ajv:
         specifier: ^8.20.0
         version: 8.20.0

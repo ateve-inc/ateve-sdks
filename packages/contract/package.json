@@ -8,10 +8,12 @@
     "media:check:test": "node check-media.ts test",
     "media:check:preview": "node check-media.ts preview",
     "live:check": "node check-live.ts && node check-media.ts production && node check-content.ts production",
-    "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts"
+    "lint": "node ../../tools/codegen/src/cli.ts validate && redocly lint openapi.json --extends=minimal && node validate-fixtures.ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@redocly/cli": "^2.81.0",
+    "@types/node": "^26.6.10",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1"
   }

@@ -116,7 +116,8 @@ task using TypeScript 7. The JS SDK enables `isolatedDeclarations` so tsdown use
 Oxc to generate ESM/CommonJS declarations without the classic TypeScript API.
 Package checks compile consumers against both declaration entry points.
 Python lint/typecheck run Ruff/mypy; Java runs Maven `validate`/`test-compile`.
-Tooling lint checks Node script syntax, and tooling typecheck checks strict TypeScript.
+Tooling lint checks Node script syntax. Run `pnpm exec tsc -b` from the root to
+typecheck the JS SDK, contract scripts and generator without building SDK artifacts.
 
 ## Shared API models
 

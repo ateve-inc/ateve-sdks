@@ -20,6 +20,10 @@
     "build": {
       "outputs": ["dist/**", "target/**", "!target/surefire-reports/**", "!target/maven-status/**"]
     },
+    "@ateve/js#build": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"],
+      "outputs": ["dist/**"]
+    },
     "@ateve/codegen#build": {
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -49,7 +53,23 @@
       "outputs": []
     },
     "@ateve/codegen#typecheck": {
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/contract/*.ts"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/packages/contract/*.ts"
+      ],
+      "outputs": []
+    },
+    "@ateve/contract#typecheck": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/tools/codegen/src/types.ts"
+      ],
+      "outputs": []
+    },
+    "@ateve/js#typecheck": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"],
       "outputs": []
     },
     "lint": {
