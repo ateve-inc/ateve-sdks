@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-11-28
+
+- Correct the public product name to **Decisions API** in the SDK documentation,
+  OpenAPI contract and model descriptions.
+- Update workspace development dependencies and the pnpm lockfile.
+
 ## 0.4.0 — 2026-11-28
 
 ### Fetch API
