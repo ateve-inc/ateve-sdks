@@ -34,12 +34,35 @@ SearchResponse response = client.search(SearchRequest.builder()
 System.out.println(response.id());
 ```
 
-## Images Search and Videos Search
+## Image Search API
 
-| Native SDK feature | Status   |
-| ------------------ | -------- |
-| Images Search      | Released |
-| Videos Search      | Released |
+```java
+ImageSearchResponse images = client.searchImages(ImageSearchRequest.builder()
+        .query("James Webb Space Telescope")
+        .maxResults(5)
+        .build());
+
+for (ImageSearchResult image : images.results()) {
+    System.out.println(image.title() + " " + image.url());
+}
+```
+
+Use `client.searchImagesAsync(request)` for a `CompletableFuture<ImageSearchResponse>`.
+
+## Video Search API
+
+```java
+VideoSearchResponse videos = client.searchVideos(VideoSearchRequest.builder()
+        .query("James Webb Space Telescope launch")
+        .maxResults(5)
+        .build());
+
+for (VideoSearchResult video : videos.results()) {
+    System.out.println(video.title() + " " + video.url());
+}
+```
+
+Use `client.searchVideosAsync(request)` for a `CompletableFuture<VideoSearchResponse>`.
 
 ## Fetch API
 

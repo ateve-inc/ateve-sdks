@@ -58,12 +58,31 @@ Import the Web Search request and response types from the package root.
 import type { SearchRequest, SearchResponse } from "ateve";
 ```
 
-## Images Search and Videos Search
+## Image Search API
 
-| Native SDK feature | Status   |
-| ------------------ | -------- |
-| Images Search      | Released |
-| Videos Search      | Released |
+```ts
+const images = await client.searchImages({
+  query: "James Webb Space Telescope",
+  maxResults: 5,
+});
+
+for (const image of images.results) {
+  console.log(image.title, image.url);
+}
+```
+
+## Video Search API
+
+```ts
+const videos = await client.searchVideos({
+  query: "James Webb Space Telescope launch",
+  maxResults: 5,
+});
+
+for (const video of videos.results) {
+  console.log(video.title, video.url);
+}
+```
 
 ## Fetch API
 

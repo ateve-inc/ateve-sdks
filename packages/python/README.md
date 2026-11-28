@@ -53,12 +53,31 @@ Typed errors include `AuthenticationError`, `PaymentRequiredError`,
 `RateLimitError` preserves `retry_after_seconds` and `limit_scope`; retry
 decisions remain caller-owned.
 
-## Images Search and Videos Search
+## Image Search API
 
-| Native SDK feature | Status   |
-| ------------------ | -------- |
-| Images Search      | Released |
-| Videos Search      | Released |
+```python
+from ateve import Ateve
+
+with Ateve() as client:
+    images = client.search_images("James Webb Space Telescope", max_results=5)
+    for image in images.results:
+        print(image.title, image.url)
+```
+
+With `AsyncAteve`, use `await client.search_images(...)`.
+
+## Video Search API
+
+```python
+from ateve import Ateve
+
+with Ateve() as client:
+    videos = client.search_videos("James Webb Space Telescope launch", max_results=5)
+    for video in videos.results:
+        print(video.title, video.url)
+```
+
+With `AsyncAteve`, use `await client.search_videos(...)`.
 
 ## Fetch API
 
