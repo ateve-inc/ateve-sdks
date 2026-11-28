@@ -72,7 +72,7 @@ with Ateve() as client:
 
 `page.content` contains Markdown. With `AsyncAteve`, call `await client.fetch(url)`.
 
-## Decision API
+## Decisions API
 
 ```python
 from ateve import Ateve, DecisionRequest, NoulAnswer, NoulQuestion
@@ -90,7 +90,7 @@ with Ateve() as client:
     print(result.usage.input_tokens, client.decisions.list_models().models)
 ```
 
-Decision API accepts a mix of `ChoiceQuestion`, `ScoreQuestion` and
+Decisions API accepts a mix of `ChoiceQuestion`, `ScoreQuestion` and
 `NoulQuestion` in a single request. Omit `model` to use the server default.
 With `AsyncAteve`, await `client.decisions.decide(request)` and
 `client.decisions.list_models()`.

@@ -208,7 +208,7 @@ export interface DecisionRequest {
 
 export interface DecisionUsage {
   inputTokens: number;
-  /** Always zero for Decision API responses. */
+  /** Always zero for Decisions API responses. */
   outputTokens: number;
 }
 

@@ -8,7 +8,7 @@
   "tags": [
     { "name": "Fetch API", "description": "Read the title and Markdown content of a page URL." },
     {
-      "name": "Decision API",
+      "name": "Decisions API",
       "description": "Evaluate structured questions and discover supported models."
     }
   ],
@@ -742,7 +742,7 @@
           "output_tokens": {
             "type": "integer",
             "minimum": 0,
-            "description": "Always zero for Decision API responses."
+            "description": "Always zero for Decisions API responses."
           }
         },
         "additionalProperties": true,
@@ -1624,7 +1624,7 @@
     },
     "/v1/systemone": {
       "post": {
-        "tags": ["Decision API"],
+        "tags": ["Decisions API"],
         "summary": "Evaluate structured questions",
         "requestBody": {
           "required": true,
@@ -1726,7 +1726,7 @@
     },
     "/v1/models": {
       "get": {
-        "tags": ["Decision API"],
+        "tags": ["Decisions API"],
         "summary": "List supported model IDs and aliases",
         "responses": {
           "200": {

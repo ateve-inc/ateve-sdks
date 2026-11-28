@@ -42,7 +42,7 @@ used by the SDK regression tests. Run [the test-environment media check](../../R
 body and a title. A missing title is represented by an empty string. The
 `fetch-response.json` fixture exercises newlines, a table and a fenced code block.
 
-## Decision API
+## Decisions API
 
 `POST /v1/systemone` represents Choice, Score and Noul questions and answers
 as unions keyed by `type`. The maps in

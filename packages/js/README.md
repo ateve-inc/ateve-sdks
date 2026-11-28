@@ -75,7 +75,7 @@ console.log(page.title, page.content);
 `page.content` contains Markdown. The URL must use HTTP or HTTPS, include a hostname,
 contain no username or password, and be at most 8,192 characters.
 
-## Decision API
+## Decisions API
 
 ```ts
 const result = await client.decisions.decide({
@@ -91,7 +91,7 @@ if (answer?.type === "noul") console.log(answer.noul);
 console.log(result.usage.inputTokens, (await client.decisions.listModels()).models);
 ```
 
-Decision API accepts up to 32 questions per request. The server defaults to
+Decisions API accepts up to 32 questions per request. The server defaults to
 `ateve-jev-v1` when `model` is omitted. Use `client.decisions.listModels()` to
 discover supported model IDs and aliases.
 

@@ -53,7 +53,7 @@ System.out.println(page.content());
 `page.content()` contains Markdown. Use `client.fetchAsync(url)` for a
 `CompletableFuture<FetchResponse>`.
 
-## Decision API
+## Decisions API
 
 ```java
 import ai.ateve.models.*;
@@ -70,7 +70,7 @@ System.out.println(answer.noul());
 System.out.println(client.decisions().listModels().models());
 ```
 
-Decision API supports `ChoiceQuestion`, `ScoreQuestion` and `NoulQuestion`
+Decisions API supports `ChoiceQuestion`, `ScoreQuestion` and `NoulQuestion`
 in one request. Omit `model` to use the server default.
 `client.decisions().decideAsync(request)` and
 `client.decisions().listModelsAsync()` return `CompletableFuture` values.

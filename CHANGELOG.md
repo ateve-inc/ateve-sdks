@@ -8,7 +8,7 @@
   It returns the page title and Markdown body, preserving line breaks,
   tables and fenced code blocks. Python and Java also support asynchronous fetches.
 
-### Decision API
+### Decisions API
 
 - Submit Choice, Score and Noul questions together through `client.decisions.decide()`
   in JavaScript and Python, or `client.decisions().decide()` in Java. Responses

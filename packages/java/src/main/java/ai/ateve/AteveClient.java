@@ -180,7 +180,7 @@ public final class AteveClient {
         return await(fetchAsync(url));
     }
 
-    /** Structured decisions and model discovery for the Decision API. */
+    /** Structured decisions and model discovery for the Decisions API. */
     public DecisionClient decisions() {
         return decisions;
     }
@@ -241,7 +241,7 @@ public final class AteveClient {
                 response -> response.title() != null && response.content() != null);
     }
 
-    /** Blocking and asynchronous Decision API operations backed by the owning client. */
+    /** Blocking and asynchronous Decisions API operations backed by the owning client. */
     public final class DecisionClient {
         private final URI decisionsUri = URI.create(baseUrl + "/v1/systemone");
         private final URI modelsUri = URI.create(baseUrl + "/v1/models");

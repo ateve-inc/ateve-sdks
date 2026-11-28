@@ -44,14 +44,14 @@ up to 1,000 characters and an optional `max_results` from 1 to 10.
 See the SDK examples for [JavaScript](packages/js/README.md#fetch-api),
 [Python](packages/python/README.md#fetch-api) and [Java](packages/java/README.md#fetch-api).
 
-## Decision API
+## Decisions API
 
 `POST /v1/systemone` evaluates Choice, Score and Noul questions against shared
 context. `GET /v1/models` lists the model IDs and aliases accepted in the `model` field.
 The SDK exposes both operations through `client.decisions` in JavaScript
 and Python and `client.decisions()` in Java. See the SDK examples for
-[JavaScript](packages/js/README.md#decision-api),
-[Python](packages/python/README.md#decision-api) and [Java](packages/java/README.md#decision-api).
+[JavaScript](packages/js/README.md#decisions-api),
+[Python](packages/python/README.md#decisions-api) and [Java](packages/java/README.md#decisions-api).
 
 ## Development
 
@@ -171,7 +171,7 @@ the shared OpenAPI contract at `https://api.ateve.ai`.
   highlights and plain-text and Markdown extraction.
 - Image Search and Video Search each make one request to verify the echoed query and result limit.
 - Fetch API makes one request and checks that the Markdown content is nonempty.
-- The Decision API check submits a mixed Choice, Score and Noul request and lists the available models.
+- The Decisions API check submits a mixed Choice, Score and Noul request and lists the available models.
 
 Search and Fetch use billable production calls. Keys and response bodies are
 not logged or saved by the check. The ordinary `pnpm check` remains offline

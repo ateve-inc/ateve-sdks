@@ -25,7 +25,7 @@ export const DEFAULT_BASE_URL = "https://api.ateve.ai";
 export const DEFAULT_TIMEOUT_MS = 60_000;
 export const DEFAULT_MAX_RESPONSE_BYTES: number = 32 * 1024 * 1024;
 
-/** Structured decisions and model discovery for the Decision API. */
+/** Structured decisions and model discovery for the Decisions API. */
 export interface DecisionClient {
   decide(request: DecisionRequest, options?: RequestOptions): Promise<DecisionResponse>;
   listModels(options?: RequestOptions): Promise<ListModelsResponse>;

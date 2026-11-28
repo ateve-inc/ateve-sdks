@@ -13,7 +13,7 @@ TypeScript and `erasableSyntaxOnly`. Node does not typecheck at runtime.
 The generator supports named enums and object models, local `$ref`, primitive
 values, arrays, typed and unstructured string-keyed maps, nullable values and
 ISO dates. Request constraints include numeric bounds, string length and
-patterns, and array and map sizes. Decision API schemas use string literals, named
+patterns, and array and map sizes. Decisions API schemas use string literals, named
 `oneOf` variants with a required `type` discriminator, and flexible JSON values
 for state, instructions and criteria. Other compositions and inline models
 fail validation.

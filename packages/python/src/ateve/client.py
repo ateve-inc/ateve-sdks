@@ -360,7 +360,7 @@ class Ateve(_BaseAteve):
 
     @property
     def decisions(self) -> DecisionClient:
-        """Evaluate questions and list models with the Decision API."""
+        """Evaluate questions and list models with the Decisions API."""
         return DecisionClient(self)
 
     def _send(
@@ -507,7 +507,7 @@ class AsyncAteve(_BaseAteve):
 
     @property
     def decisions(self) -> AsyncDecisionClient:
-        """Evaluate questions and list models with the Decision API."""
+        """Evaluate questions and list models with the Decisions API."""
         return AsyncDecisionClient(self)
 
     async def _send(
@@ -584,7 +584,7 @@ class AsyncAteve(_BaseAteve):
 
 
 class DecisionClient:
-    """Synchronous Decision API operations using an existing Ateve client."""
+    """Synchronous Decisions API operations using an existing Ateve client."""
 
     def __init__(self, client: Ateve) -> None:
         self._client = client
@@ -599,7 +599,7 @@ class DecisionClient:
 
 
 class AsyncDecisionClient:
-    """Asynchronous Decision API operations using an existing AsyncAteve client."""
+    """Asynchronous Decisions API operations using an existing AsyncAteve client."""
 
     def __init__(self, client: AsyncAteve) -> None:
         self._client = client

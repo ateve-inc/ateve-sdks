@@ -137,7 +137,7 @@ test("unsupported structures, unresolved references and stale bindings fail clos
   assert.throws(() => render(otherApi, otherBindings), /Unsupported Python binding/);
 });
 
-test("tagged unions and typed maps preserve Decision API variants across languages", () => {
+test("tagged unions and typed maps preserve Decisions API variants across languages", () => {
   const [api, bindings] = loadContract();
   const generated = render(api, bindings);
   assert.match(generated.js["src/types.ts"], /answers: Record<string, DecisionAnswer>/);
